@@ -19,15 +19,13 @@ class AutomationBridge : AccessibilityService() {
         var instance: AutomationBridge? = null
         const val TAG = "QQReply"
 
-        // ===== 支持的应用包名 =====
         private const val PKG_MOBILEQQ = "com.tencent.mobileqq"
         private const val PKG_QQ = "com.tencent.qq"
         private const val PKG_TIM = "com.tencent.tim"
-        private const val PKG_WECHAT = "com.tencent.mm" // 🌟 新增微信包名
+        private const val PKG_WECHAT = "com.tencent.mm" 
         private const val QQ_ID_PREFIX = "com.tencent.mobileqq:id/"
         private const val QQ2_ID_PREFIX = "com.tencent.qq:id/"
 
-        // 内存调试日志缓冲
         private const val LOG_MAX = 400
         private data class LogEntry(
             val message: String,
@@ -76,7 +74,7 @@ class AutomationBridge : AccessibilityService() {
     }
 
     private var isQQ = false
-    private var isWechat = false // 🌟 新增微信标记
+    private var isWechat = false 
     private var whitelist: MutableList<AppEntry> = mutableListOf()
     private var allAppsEnabled = false
     var floatCollapseOnCopy = true
@@ -90,9 +88,10 @@ class AutomationBridge : AccessibilityService() {
     private var shizukuKeepAlive = false
     
     private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
-    private val TEXT_CHANGE_DELAY_MS = 50L
+    // 🌟 优化打字卡顿：将延迟从 50ms 改为 120ms，给 CPU 留出喘息时间
+    private val TEXT_CHANGE_DELAY_MS = 120L
     private var pendingTextRunnable: Runnable? = null
-    private val CONTENT_CHANGE_DELAY_MS = 50L
+    private val CONTENT_CHANGE_DELAY_MS = 120L
     private var pendingContentRunnable: Runnable? = null
     
     private var verifyPending = false
@@ -171,7 +170,6 @@ class AutomationBridge : AccessibilityService() {
         try {
             reload()
             addLog("服务已连接并启动，功能开关=$funcEnabled")
-            showToast("WeaiText服务已启动")
             if (shizukuKeepAlive) {
                 bgExecutor.execute {
                     try {
@@ -233,7 +231,6 @@ class AutomationBridge : AccessibilityService() {
         if (isInputMethodPackage(pkg)) return
         if (!isSupportedPackage(pkg)) return
         
-        // 🌟 判断是否为微信或QQ
         isQQ = pkg.startsWith(PKG_MOBILEQQ) || pkg == PKG_QQ || pkg == PKG_TIM
         isWechat = pkg == PKG_WECHAT
 
@@ -327,7 +324,6 @@ class AutomationBridge : AccessibilityService() {
         }
     }
 
-    // 🌟 强制放行微信
     private fun isSupportedPackage(pkg: String): Boolean =
         allAppsEnabled || pkg.startsWith(PKG_MOBILEQQ) || pkg == PKG_QQ ||
             pkg == PKG_TIM || pkg == PKG_WECHAT || whitelist.any { it.pkg == pkg && it.enabled }
@@ -440,9 +436,7 @@ class AutomationBridge : AccessibilityService() {
                         return
                     }
 
-                    // 🌟 微信专属写入逻辑
                     if (isWechat) {
-                        // 先尝试原生写入
                         var success = setText(inputNode, newText)
                         if (!success) {
                             addLog("微信原生写入失败，尝试剪贴板粘贴大法")
@@ -457,7 +451,6 @@ class AutomationBridge : AccessibilityService() {
                             addLog("微信拦截了所有写入方式")
                         }
                     } else {
-                        // 其他应用正常写入
                         if (setText(inputNode, newText)) {
                             lastSet = newText
                             setCursorEnd(inputNode, cursorIndex)
@@ -497,18 +490,13 @@ class AutomationBridge : AccessibilityService() {
         }
     }
 
-    // 🌟 终极武器：利用剪贴板粘贴，专治微信等顽固输入框
     private fun pasteText(node: AccessibilityNodeInfo, text: String): Boolean {
         try {
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            // 备份原来的剪贴板
             val originalClip = clipboard.primaryClip
-            
-            // 写入新文本
             val clip = ClipData.newPlainText("weaitext", text)
             clipboard.setPrimaryClip(clip)
             
-            // 全选并粘贴
             node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
             val selectArgs = Bundle()
             selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
@@ -517,7 +505,6 @@ class AutomationBridge : AccessibilityService() {
             
             val pasteSuccess = node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
             
-            // 恢复原剪贴板 (延迟一下防止冲突)
             if (originalClip != null) {
                 mainHandler.postDelayed({
                     try { clipboard.setPrimaryClip(originalClip) } catch (_: Exception) {}
@@ -546,6 +533,13 @@ class AutomationBridge : AccessibilityService() {
             tailPending = false
             return true
         }
+        
+        // 🌟 核心修复：如果是纯空白字符（换行、空格），直接拦截，绝对不自动加后缀！
+        if (raw.isBlank()) {
+            lastSet = raw
+            return true
+        }
+
         if (justSwitchedWindow && lastSet.isEmpty() && raw.contains("\n") && !pasteLike) {
             justSwitchedWindow = false
             lastSet = raw
@@ -661,7 +655,6 @@ class AutomationBridge : AccessibilityService() {
     }
 
     private fun findInputField(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-        // QQ的专属ID查找
         if (isQQ) {
             val ids = listOf(
                 QQ_ID_PREFIX + "inputBar", QQ_ID_PREFIX + "chat_input", QQ_ID_PREFIX + "message_edit",
@@ -684,14 +677,10 @@ class AutomationBridge : AccessibilityService() {
             }
         }
 
-        // 通用查找
         findFocusedEditable(root)?.let { return it }
         findEditable(root)?.let { return it }
-        
-        // 微信经常不暴露 isEditable，强行按类名找
         findEditTextByClassName(root)?.let { return it }
         
-        // 兜底找焦点
         val focus = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
         val focusOk = focus != null && runCatching { focus.isEditable || (focus.className?.toString()?.endsWith("EditText") == true) }.getOrDefault(false)
         return if (focusOk) AccessibilityNodeInfo.obtain(focus) else {
@@ -740,10 +729,6 @@ class AutomationBridge : AccessibilityService() {
             } catch (_: Throwable) {}
         }
         return null
-    }
-
-    private fun showToast(text: String) {
-        mainHandler.post { Toast.makeText(this@AutomationBridge, text, Toast.LENGTH_LONG).show() }
     }
 
     override fun onInterrupt() {
