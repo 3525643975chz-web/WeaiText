@@ -142,6 +142,11 @@ class AutomationBridge : AccessibilityService() {
         } catch (e: Throwable) {}
     }
 
+    // 🌟 补全这个方法，防止 TilePanelActivity 报错
+    fun setFuncEnabled(enabled: Boolean) {
+        funcEnabled = enabled
+    }
+
     fun reload() {
         PhraseProcessor.reload(this)
         val cfg = SettingsRepository.load(this)
@@ -177,7 +182,6 @@ class AutomationBridge : AccessibilityService() {
         if (isInputMethodPackage(pkg)) return
         if (!isSupportedPackage(pkg)) return
         
-        // 🌟 判断微信
         isQQ = pkg.startsWith(PKG_MOBILEQQ) || pkg == PKG_QQ || pkg == PKG_TIM
         isWechat = pkg == PKG_WECHAT
 
@@ -252,7 +256,6 @@ class AutomationBridge : AccessibilityService() {
         pendingContentRunnable?.let { mainHandler.removeCallbacks(it); pendingContentRunnable = null }
     }
 
-    // 🌟 强制放行微信
     private fun isSupportedPackage(pkg: String): Boolean =
         allAppsEnabled || pkg.startsWith(PKG_MOBILEQQ) || pkg == PKG_QQ ||
             pkg == PKG_TIM || pkg == PKG_WECHAT || whitelist.any { it.pkg == pkg && it.enabled }
@@ -345,12 +348,10 @@ class AutomationBridge : AccessibilityService() {
                     }
 
                     if (isWechat) {
-                        // 🌟 微信终极制裁
                         var success = setText(inputNode, newText)
                         if (!success) {
                             success = pasteText(inputNode, newText)
                         }
-                        // 微信输入框会自己刷新，再尝试一遍强制粘贴
                         if (!success) {
                             mainHandler.postDelayed({
                                 try {
@@ -363,7 +364,7 @@ class AutomationBridge : AccessibilityService() {
                                     curRoot?.recycle()
                                 } catch (_: Exception) {}
                             }, 100)
-                            success = true // 假设成功
+                            success = true 
                         }
                         
                         if (success) {
@@ -372,7 +373,6 @@ class AutomationBridge : AccessibilityService() {
                             addLog("微信替换指令已发送！")
                         }
                     } else {
-                        // 其他应用正常写入
                         if (setText(inputNode, newText)) {
                             lastSet = newText
                             setCursorEnd(inputNode, cursorIndex)
