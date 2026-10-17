@@ -2,401 +2,466 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WeaiText - 舒适全屏版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>WeaiText - Cute Magic</title>
     <style>
         :root {
-            --bg-color: #E8ECF1;
-            --glass-bg: rgba(255, 255, 255, 0.55);
-            --glass-border: rgba(255, 255, 255, 0.7);
-            --text-main: #1C1C1E;
-            --text-sub: #8E8E93;
-            --accent-green: #34C759;
-            --accent-red: #FF3B30;
-            --cute-pink: #5B8DEF;
-            --app-max-width: 480px;
-            --card-radius: 20px;
-            --glass-shadow: 0 12px 40px rgba(31, 38, 135, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            --text-main: #FFFFFF;
+            --text-sub: #E2E8F0;
+            
+            /* 核心：将背景设为你提供的图片 */
+            --bg-image: url('background.jpg'); 
+            
+            /* 液态玻璃质感（暗色半透明，透出背景的同时保证文字可读） */
+            --glass-bg: rgba(25, 20, 35, 0.45); 
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-highlight: rgba(255, 255, 255, 0.7);
+            
+            /* 马卡龙魔法色 */
+            --magic-pink: #FF7EB3;
+            --magic-blue: #7EE8FA;
+            --grad-btn: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%);
+            --grad-badge: linear-gradient(135deg, rgba(255,126,179,0.3), rgba(126,232,250,0.3));
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
+        /* 梦幻背景层 */
+        html, body { 
+            width: 100%; height: 100%; overflow: hidden; 
+            background-color: #000; /* 加载图片前的底色 */
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; 
+            color: var(--text-main); user-select: none; 
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-color); font-family: -apple-system, sans-serif; color: var(--text-main); user-select: none; }
+        /* 软糯的触摸小光点 */
+        .click-wave {
+            position: fixed; border-radius: 50%; pointer-events: none; z-index: 9999;
+            background: rgba(255, 126, 179, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 15px rgba(255, 126, 179, 0.8);
+            transform: translate(-50%, -50%) scale(0);
+            animation: waveAnim 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes waveAnim {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+        /* 纯正液态玻璃卡片 */
+        .liquid-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(150%); /* 毛玻璃效果 */
+            -webkit-backdrop-filter: blur(16px) saturate(150%);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-highlight);
+            border-left: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 32px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .liquid-glass:active { transform: scale(0.96); background: rgba(50, 40, 60, 0.6); }
         
-        .bg-image { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; background: url("https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1080&q=80") center/cover no-repeat; }
-        .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: linear-gradient(180deg, rgba(200, 215, 235, 0.5) 0%, rgba(220, 228, 240, 0.3) 100%); }
-
-        .glass { background: var(--glass-bg); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%); border: 1px solid var(--glass-border); border-top: 1px solid rgba(255, 255, 255, 0.9); box-shadow: var(--glass-shadow); border-radius: var(--card-radius); position: relative; overflow: hidden; transition: transform 0.15s ease; }
-        .glass:active { transform: scale(0.98); }
-
-        .app-container { width: 100%; max-width: var(--app-max-width); height: 100%; position: relative; display: flex; flex-direction: column; margin: 0 auto; }
-        .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 1; }
+        .app-container { width: 100%; max-width: 480px; height: 100%; position: relative; display: flex; flex-direction: column; margin: 0 auto; }
+        .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; }
         .page.active { display: flex; animation: fadeIn 0.3s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .scrollable-content { flex: 1; overflow-y: auto; padding: 20px 16px 160px 16px; -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .scrollable-content { 
+            flex: 1; overflow-y: auto; 
+            padding: calc(80px + env(safe-area-inset-top)) 24px calc(160px + env(safe-area-inset-bottom)) 24px; 
+            -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; 
+        }
         .scrollable-content::-webkit-scrollbar { display: none; }
 
-        .home-header { margin-bottom: 24px; padding: 0 4px; display: flex; align-items: center; gap: 8px; }
-        .home-header h1 { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
-        .home-header p { font-size: 14px; color: var(--text-sub); margin-top: 4px; font-weight: 500; }
-
-        .switch-card { padding: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .switch-info h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .switch-info p { font-size: 13px; color: var(--text-sub); }
+        /* 顶部标题增加深色阴影，防止在粉色背景上看不清 */
+        .hud-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+        .hud-title h1 { font-size: 38px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 2px 10px rgba(0,0,0,0.6); margin-bottom: 6px; }
+        .hud-title p { font-size: 12px; color: #FFF; font-weight: 800; letter-spacing: 4px; text-shadow: 0 1px 5px rgba(0,0,0,0.8); }
         
-        .toggle-switch { width: 56px; height: 32px; border-radius: 16px; background: rgba(0,0,0,0.08); position: relative; cursor: pointer; transition: background 0.3s; flex-shrink: 0; }
-        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.12); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .toggle-switch.on { background: var(--accent-green); }
-        .toggle-switch.on::after { transform: translateX(24px); }
-
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
-        .stat-card { padding: 24px; display: flex; flex-direction: column; justify-content: center; cursor: pointer; }
-        .stat-num { font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
-        .stat-label { font-size: 13px; color: var(--text-sub); font-weight: 600; }
-
-        .section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; padding-left: 8px; color: var(--text-main); }
-        .action-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
-        .action-item { padding: 22px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-        .action-text { font-size: 16px; font-weight: 600; }
-        .action-arrow { color: #C7C7CC; font-size: 20px; transition: transform 0.3s; }
-        .action-item:active .action-arrow { transform: translateX(4px); }
-        .recent-rules { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-        .recent-item { display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
-        .recent-item span { font-weight: 600; }
-        .recent-arrow { color: var(--text-sub); margin: 0 8px; font-weight: 300; }
-
-        .config-rules { padding: 8px 16px; display: flex; flex-direction: column; }
-        .config-rule-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
-        .config-rule-item:last-child { border-bottom: none; }
-        .delete-btn { color: #A1A1A6; cursor: pointer; padding: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); }
-        .delete-btn:active { color: var(--accent-red); background: rgba(255,59,48,0.1); transform: scale(0.8) rotate(10deg); }
-
-        #page-apps { padding: 0; } 
-        .tool-section-title { font-size: 14px; font-weight: 700; color: var(--text-sub); margin: 24px 0 8px 12px; }
-        .tool-card { padding: 8px 16px; display: flex; flex-direction: column; }
-        .tool-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.04); cursor: pointer; }
-        .tool-item:last-child { border-bottom: none; }
-        .tool-icon { font-size: 20px; width: 32px; text-align: center; }
-        .tool-info { flex: 1; margin-left: 12px; }
-        .tool-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-        .tool-desc { font-size: 12px; color: var(--text-sub); }
-
-        #page-app-select { padding: 0; background: var(--bg-color); }
-        .apps-header-wrap { padding: 20px 16px 0 16px; flex-shrink: 0; position: relative; z-index: 10; background: transparent; }
-        .search-bar { display: flex; align-items: center; padding: 12px 16px; margin: 20px 16px 16px 16px; border-radius: 16px; flex-shrink: 0; position: relative; z-index: 10; }
-        .search-bar input { border: none; background: transparent; outline: none; font-size: 16px; width: 100%; margin-left: 8px; color: var(--text-main); }
-        .search-bar input::placeholder { color: var(--text-sub); }
-        .apps-status { font-size: 14px; color: var(--text-sub); margin: 0 16px 16px 16px; flex-shrink: 0; position: relative; z-index: 10; }
+        /* 核心控制台 */
+        .core-hub { padding: 30px; margin-bottom: 24px; cursor: pointer; }
+        .hub-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .hub-title h2 { font-size: 24px; font-weight: 900; margin-bottom: 8px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        .hub-title p { font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 600; }
         
-        .scroll-container { flex: 1; overflow-y: auto; padding: 20px 20px 160px 20px; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%); }
-        .scroll-container::-webkit-scrollbar { display: none; }
+        /* 祝福语 */
+        .blessing-text {
+            border-top: 1px solid rgba(255,255,255,0.15);
+            padding-top: 20px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.95);
+            font-weight: 600;
+            line-height: 1.5;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        /* 软萌拨动开关 */
+        .toggle {
+            width: 64px; height: 36px; border-radius: 18px;
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+            position: relative; transition: 0.3s; box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+        }
+        .toggle::after {
+            content: ''; position: absolute; top: 3px; left: 3px; width: 28px; height: 28px;
+            border-radius: 50%; background: #FFF; transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        .toggle.on { background: rgba(255, 126, 179, 0.6); border-color: #FFF; box-shadow: 0 0 20px rgba(255, 126, 179, 0.6); }
+        .toggle.on::after { transform: translateX(28px); background: #FFF; box-shadow: 0 0 15px rgba(255,255,255,1); }
+
+        /* 快捷双翼 */
+        .action-wings { display: flex; gap: 16px; margin-bottom: 24px; }
+        .wing-btn { flex: 1; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; cursor: pointer; }
         
-        .app-item { padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 14px; border-radius: 22px; background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 4px 15px rgba(31, 38, 135, 0.05); transition: transform 0.15s ease, background 0.2s ease; }
-        .app-item:active { transform: scale(0.96); background: #fff; }
-        .app-info { display: flex; flex-direction: column; gap: 4px; }
-        .app-name { font-size: 16px; font-weight: 600; }
-        .app-pkg { font-size: 12px; color: var(--text-sub); }
-        .app-check { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); flex-shrink: 0; }
-        .app-item.selected .app-check { background: var(--cute-pink); border-color: var(--cute-pink); color: #fff; box-shadow: 0 3px 12px rgba(91, 141, 239, 0.4); transform: scale(1.1); }
-        .app-check svg { opacity: 0; transition: opacity 0.2s; }
-        .app-item.selected .app-check svg { opacity: 1; }
-        @keyframes checkBounce { 0% { transform: scale(1); } 30% { transform: scale(1.3); } 50% { transform: scale(0.9); } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .app-item.selected .app-check { animation: checkBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-
-        #page-about { display: none; flex-direction: column; align-items: center; justify-content: center; }
-        #page-about.active { display: flex; }
-        .about-card { width: 85%; max-width: 360px; padding: 45px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
-        .avatar-wrapper { position: relative; width: 130px; height: 130px; margin-bottom: 8px; animation: avatarPulse 3s ease-in-out infinite; border-radius: 50%; }
-        .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: top; border: 3px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 25px rgba(31, 38, 135, 0.12); transition: transform 0.3s; }
-        .avatar:active { transform: scale(0.95) rotate(5deg); }
-        .author-name { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
-        .author-role { font-size: 14px; color: var(--text-sub); font-weight: 500; margin-top: -8px; }
-        .tag-container { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
-        .tag { background: rgba(255,255,255,0.6); border: 1px solid rgba(91, 141, 239, 0.3); padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; color: var(--cute-pink); }
-        @keyframes avatarPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(91, 141, 239, 0.2); } 50% { box-shadow: 0 0 0 12px rgba(91, 141, 239, 0); } }
-
-        .bottom-nav { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: var(--app-max-width); background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.7); border-top: 1px solid rgba(255, 255, 255, 0.85); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; padding: 8px 6px; padding-top: 12px; z-index: 100; box-shadow: 0 20px 60px rgba(31, 38, 135, 0.12); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8E8E93; font-size: 11px; cursor: pointer; flex: 1; gap: 4px; }
-        .nav-item.active { color: var(--cute-pink); font-weight: 700; }
-        .nav-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-        .nav-item.active .nav-icon { animation: navBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes navBounce { 0% { transform: scale(1); } 30% { transform: scale(1.3) translateY(-3px); } 50% { transform: scale(0.95) translateY(0); } 70% { transform: scale(1.1) translateY(-1px); } 100% { transform: scale(1); } }
-        .nav-item:active { transform: scale(0.92); }
+        .wing-icon { 
+            font-size: 34px; 
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+            margin-bottom: 4px;
+        }
         
-        .nav-item-center { width: 46px; height: 46px; flex: 0 0 46px; background: linear-gradient(135deg, #5B8DEF, #7BA7F5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; font-weight: 300; box-shadow: 0 4px 15px rgba(91, 141, 239, 0.35); transform: translateY(-6px); cursor: pointer; margin: 0 6px; animation: floatCenter 3s ease-in-out infinite; }
-        .nav-item-center:active { transform: translateY(-3px) scale(0.9) !important; }
-        @keyframes floatCenter { 0%, 100% { transform: translateY(-6px); } 50% { transform: translateY(-10px); } }
+        .wing-text-row { display: flex; align-items: center; gap: 8px; }
+        .wing-text { font-size: 15px; font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,0.6); letter-spacing: 1px; }
+        
+        /* 胶囊数字 */
+        .count-badge {
+            font-size: 12px; font-weight: 900; font-family: monospace;
+            padding: 2px 8px; border-radius: 12px;
+            background: var(--grad-badge);
+            color: #FFF; border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.5), 0 2px 5px rgba(0,0,0,0.3);
+        }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(31, 38, 135, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-content { width: 85%; max-width: 340px; padding: 28px; display: flex; flex-direction: column; gap: 16px; border-radius: 28px; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 30px 80px rgba(31, 38, 135, 0.15); transform: scale(0.95); transition: transform 0.3s; }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        .modal-content h3 { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 8px; }
-        .modal-input { width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.7); font-size: 16px; outline: none; }
-        .modal-input:focus { border-color: rgba(91, 141, 239, 0.5); box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.1); }
-        .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
-        .modal-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .modal-btn:active { transform: scale(0.95); }
-        .btn-cancel { background: rgba(0,0,0,0.04); color: var(--text-main); }
-        .btn-confirm { background: var(--cute-pink); color: #fff; box-shadow: 0 4px 12px rgba(91, 141, 239, 0.25); }
+        /* 次级模块 */
+        .sub-module { padding: 22px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; cursor: pointer; }
+        .sub-module h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .sub-module p { font-size: 12px; color: rgba(255,255,255,0.8); }
+        
+        .toggle-sm { width: 48px; height: 26px; border-radius: 13px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); position: relative; transition: 0.3s; box-shadow: inset 0 2px 6px rgba(0,0,0,0.5); }
+        .toggle-sm::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #FFF; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .toggle-sm.on { background: rgba(126, 232, 250, 0.6); border-color: #FFF; box-shadow: 0 0 15px rgba(126,232,250,0.6); }
+        .toggle-sm.on::after { transform: translateX(22px); background: #FFF; box-shadow: 0 0 10px rgba(255,255,255,1); }
 
-        .glass, .app-item { animation: cardPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        @keyframes cardPopIn { 0% { opacity: 0; transform: scale(0.9) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        /* 列表 */
+        .section-title { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 16px; margin-left: 4px; letter-spacing: 1px; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        .list-container { padding: 8px 20px; }
+        .list-item { display: flex; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 15px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+        .list-item:last-child { border: none; }
+
+        /* 底部悬浮岛 */
+        .floating-island {
+            position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+            width: 88%; max-width: 420px; height: 68px;
+            background: rgba(20, 15, 30, 0.7); backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.3); border-top: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 34px; display: flex; justify-content: space-around; align-items: center;
+            padding: 0 10px; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+        }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s; padding: 10px; }
+        .nav-btn.active { color: #FFF; }
+        .nav-btn svg { width: 22px; height: 22px; transition: 0.3s; }
+        .nav-btn.active svg { transform: translateY(-2px); color: var(--magic-pink); filter: drop-shadow(0 0 8px var(--magic-pink)); }
+        
+        .nav-add-btn {
+            width: 50px; height: 50px; border-radius: 50%; background: var(--grad-btn);
+            box-shadow: 0 0 25px rgba(255,126,179,0.8), inset 0 2px 4px rgba(255,255,255,0.8);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 28px; font-weight: 300; cursor: pointer; transition: 0.3s; margin-top: -15px;
+        }
+        .nav-add-btn:active { transform: scale(0.85); }
+
+        /* 其他页通用 */
+        .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+        .page-header h1 { font-size: 28px; font-weight: 900; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+        .btn-text { font-size: 14px; font-weight: 800; color: #FFF; background: rgba(255, 126, 179, 0.8); padding: 4px 12px; border-radius: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        
+        .search-box { display: flex; align-items: center; padding: 16px 20px; margin-bottom: 20px; border-radius: 16px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); }
+        .search-box input { border: none; background: transparent; outline: none; font-size: 15px; width: 100%; margin-left: 10px; color: #fff; }
+        
+        .app-card { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-radius: 20px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
+        .app-card.selected { background: rgba(255, 126, 179, 0.2); border-color: rgba(255, 126, 179, 0.6); box-shadow: 0 0 15px rgba(255,126,179,0.2); }
+        .app-title { font-size: 15px; font-weight: 700; }
+        .app-pkg { font-size: 12px; color: rgba(255,255,255,0.7); font-family: monospace; margin-top: 4px; }
+        .app-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; }
+        .app-card.selected .app-check { background: var(--magic-pink); border-color: transparent; box-shadow: 0 0 10px rgba(255,126,179,0.8); }
+        .app-check svg { display: none; width: 14px; height: 14px; color: #000; }
+        .app-card.selected .app-check svg { display: block; }
+
+        /* 弹窗 */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal.active { opacity: 1; pointer-events: auto; }
+        .modal-content { width: 85%; max-width: 320px; background: rgba(30, 25, 40, 0.85); backdrop-filter: blur(20px); padding: 28px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: scale(0.9); transition: 0.3s; }
+        .modal.active .modal-content { transform: scale(1); }
+        .modal-input { width: 100%; padding: 16px; margin-bottom: 14px; border-radius: 14px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); color: #fff; outline: none; font-size: 15px; }
+        .modal-btns { display: flex; gap: 12px; margin-top: 16px; }
+        .modal-btn { flex: 1; padding: 16px; border-radius: 14px; border: none; font-size: 15px; font-weight: 800; cursor: pointer; }
+        .btn-cancel { background: rgba(255,255,255,0.2); color: #fff; }
+        .btn-ok { background: var(--grad-btn); color: #fff; box-shadow: 0 4px 15px rgba(255,126,179,0.4); }
     </style>
 </head>
 <body>
-
-    <div class="bg-image"></div>
-    <div class="bg-overlay"></div>
-
     <div class="app-container">
-
+        <!-- ================= 首页 ================= -->
         <div id="page-home" class="page active">
             <div class="scrollable-content">
-                <div class="home-header">
-                    <h1>WeaiText</h1>
-                    <span class="header-paw" style="font-size: 24px; animation: pawWiggle 2s infinite;">🐾</span>
-                    <p style="position: absolute; top: 55px; left: 20px;">本喵的全局魔法领域</p>
-                </div>
                 
-                <!-- 主开关 -->
-                <div class="switch-card glass">
-                    <div class="switch-info">
-                        <h2 id="statusTitle">状态：喵喵出击！</h2>
-                        <p id="statusDesc">正在巡视领地喵~</p>
-                    </div>
-                    <div class="toggle-switch on" id="mainToggle" onclick="toggleMainSwitch()"></div>
-                </div>
-
-                <!-- 魔法后台消除开关 -->
-                <div class="switch-card glass">
-                    <div class="switch-info">
-                        <h2>魔法后台消除</h2>
-                        <p>开启后本喵将遁入虚空喵~ 不在后台列表露面，但依然在默默为你施法！</p>
-                    </div>
-                    <div class="toggle-switch" id="bgToggle" onclick="toggleBackgroundMode()"></div>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card glass" onclick="switchPage('config', 1)">
-                        <div class="stat-num" id="ruleCount">0</div>
-                        <div class="stat-label">生效魔法 ➔</div>
-                    </div>
-                    <div class="stat-card glass" onclick="switchPage('app-select', 2)">
-                        <div class="stat-num" id="appCount">0</div>
-                        <div class="stat-label">目标领地 ➔</div>
+                <div class="hud-header">
+                    <div class="hud-title">
+                        <h1>WeaiText</h1>
+                        <p>CUTE MAGIC</p>
                     </div>
                 </div>
-                <div class="section-title">本喵的快捷魔法</div>
-                <div class="action-list">
-                    <div class="action-item glass" onclick="switchPage('config', 1)">
-                        <div class="action-text">✏️ 管理替换魔法</div>
-                        <div class="action-arrow">›</div>
+                <!-- 核心控制台 -->
+                <div class="liquid-glass core-hub" onclick="toggleMainSwitch()">
+                    <div class="hub-top">
+                        <div class="hub-title">
+                            <h2 id="statusTitle">喵喵出击！ 🐾</h2>
+                            <p id="statusDesc">魔法引擎运转中</p>
+                        </div>
+                        <div class="toggle on" id="mainToggle"></div>
                     </div>
-                    <div class="action-item glass" onclick="switchPage('app-select', 2)">
-                        <div class="action-text">🎯 选择生效领地</div>
-                        <div class="action-arrow">›</div>
-                    </div>
-                    <div class="action-item glass" onclick="switchPage('config', 1)">
-                        <div class="action-text">✨ 自定义后缀标识</div>
-                        <div class="action-arrow">›</div>
+                    
+                    <!-- 祝福语 -->
+                    <div class="blessing-text">
+                        <span>✨</span> 全知全能的本喵已就位，祝您今天一切顺利！
                     </div>
                 </div>
+                <!-- 快捷操作 -->
+                <div class="action-wings">
+                    <div class="liquid-glass wing-btn" onclick="switchPage('config', 1)">
+                        <div class="wing-icon">🪄</div>
+                        <div class="wing-text-row">
+                            <span class="wing-text">管理规则</span>
+                            <span class="count-badge" id="ruleCount">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="liquid-glass wing-btn" onclick="switchPage('app-select', 2)">
+                        <div class="wing-icon">🔮</div>
+                        <div class="wing-text-row">
+                            <span class="wing-text">选择领地</span>
+                            <span class="count-badge" id="appCount">0</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 后台消除 -->
+                <div class="liquid-glass sub-module" onclick="toggleBackgroundMode()">
+                    <div>
+                        <h3>无痕模式</h3>
+                        <p>退出即隐身，不占用多任务</p>
+                    </div>
+                    <div class="toggle-sm" id="bgToggle"></div>
+                </div>
+                <!-- 最近使用 -->
                 <div class="section-title">最近施展</div>
-                <div class="recent-rules glass" id="recentRules"></div>
+                <div class="liquid-glass list-container" id="recentRules"></div>
             </div>
         </div>
-
-        <!-- 配置页 -->
+        <!-- ================= 配置页 ================= -->
         <div id="page-config" class="page">
             <div class="scrollable-content">
-                <div class="home-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;">
-                    <div>
-                        <h1>替换魔法</h1>
-                        <p>管理本喵的魔法字典</p>
-                    </div>
-                    <div style="font-size:28px;cursor:pointer;line-height:1;color:#1C1C1E;" onclick="openModal()">＋</div>
-                </div>
-
-                <div class="tool-section-title" style="margin-top: 0;">附加魔法</div>
-                <div class="tool-card glass " style="margin-bottom: 24px; background: rgba(255,255,255,0.7);">
-                    <div class="tool-item" style="border-bottom: none; padding-bottom: 8px;">
-                        <div style="display:flex; align-items:center;">
-                            <div class="tool-icon">✨</div>
-                            <div class="tool-info">
-                                <div class="tool-name" id="appendMagicName">自定义后缀标识</div>
-                                <div class="tool-desc" id="appendMagicDesc">在每句话的末尾自动添加后缀</div>
-                            </div>
-                        </div>
-                        <div class="toggle-switch" id="appendToggle" onclick="toggleAppendMagic()"></div>
-                    </div>
-                    <div style="padding: 0 0 12px 0;">
-                        <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px; padding-left: 4px;">自定义标识：</div>
-                        <input type="text" id="appendInput" class="modal-input" style="padding: 12px; font-size: 15px;" value="喵" placeholder="输入自定义标识" oninput="updateAppendSuffix(this.value)">
-                    </div>
-                    <div class="tool-item" style="border-bottom: none; padding-top: 0; padding-bottom: 12px;">
-                        <div style="font-size: 12px; color: var(--cute-pink); text-align: center; width: 100%;" id="appendPreview">
-                            效果预览：今天很开心 → 今天很开心喵
-                        </div>
-                    </div>
-                </div>
-
-                <div class="config-rules glass" id="configRuleList"></div>
-                <div class="action-item glass" onclick="clearRules()" style="justify-content:center;color:var(--accent-red);font-weight:600;margin-top:20px;padding:16px;">
-                    忘记所有魔法 (清空)
-                </div>
-            </div>
-        </div>
-
-        <!-- 工具页 -->
-        <div id="page-apps" class="page">
-            <div class="scrollable-content">
-                <div class="home-header">
-                    <h1>工具</h1>
-                    <span class="header-paw" style="font-size: 24px;">🐾</span>
+                <div class="page-header">
+                    <h1>规则配置</h1>
+                    <div class="btn-text" onclick="clearRules()">清空全部</div>
                 </div>
                 
-                <div class="tool-section-title">应用选择</div>
-                <div class="tool-card glass " onclick="switchPage('app-select', 2)">
-                    <div class="tool-item" style="border-bottom:none;">
-                        <div style="display:flex; align-items:center;">
-                            <div class="tool-icon">📱</div>
-                            <div class="tool-info">
-                                <div class="tool-name">选择生效应用</div>
-                                <div class="tool-desc" id="toolSelectedCount">已选 0 个应用</div>
-                            </div>
-                        </div>
-                        <div class="action-arrow">›</div>
+                <div class="liquid-glass sub-module" style="margin-bottom: 24px;">
+                    <div>
+                        <h3 id="appendMagicName">自定义后缀</h3>
+                        <p id="appendMagicDesc">在末尾自动追加字符</p>
                     </div>
+                    <div class="toggle-sm" id="appendToggle" onclick="toggleAppendMagic()"></div>
                 </div>
+                <div class="liquid-glass list-container" id="appendInputWrap" style="margin-bottom: 24px; padding: 20px;">
+                    <input type="text" id="appendInput" class="modal-input" style="margin-bottom: 12px; background: rgba(0,0,0,0.2);" value="喵" oninput="updateAppendSuffix(this.value)">
+                    <div style="font-size: 13px; color: #FFF; font-weight: 700; text-shadow: 0 1px 5px rgba(0,0,0,0.5);" id="appendPreview">效果预览：开心喵</div>
+                </div>
+                <div class="section-title">已激活规则</div>
+                <div class="liquid-glass list-container" id="configRuleList"></div>
+            </div>
+        </div>
+        <!-- ================= 工具页 ================= -->
+        <div id="page-apps" class="page">
+            <div class="scrollable-content">
+                <div class="page-header">
+                    <h1>系统工具</h1>
+                </div>
+                
+                <div class="action-wings" style="flex-direction: column; gap: 16px;">
+                    <div class="liquid-glass sub-module" style="margin:0;" onclick="switchPage('app-select', 2)">
+                        <div><h3>📱 选择生效领地</h3><p>勾选你需要魔法生效的应用</p></div>
+                        <div style="color:#FFF; font-size:13px; font-weight:800; background: rgba(255,126,179,0.6); padding: 2px 8px; border-radius:10px;" id="toolSelectedCount">已选 0 个</div>
+                    </div>
+                    
+                    <div class="liquid-glass sub-module" style="margin:0;" onclick="openBatterySettings()">
+                        <div><h3>🔋 电池优化</h3><p>加入白名单，防止被系统杀后台</p></div>
+                        <div style="color:var(--text-sub); font-size:20px;">›</div>
+                    </div>
+                    
+                    <div class="liquid-glass sub-module" style="margin:0;" onclick="openAutoStartSettings()">
+                        <div><h3>🚀 自启动权限</h3><p>允许应用在后台自启动</p></div>
+                        <div style="color:var(--text-sub); font-size:20px;">›</div>
+                    </div>
 
-                <div class="tool-section-title" style="margin-top:24px;">后台保活</div>
-                <div class="tool-card glass ">
-                    <div class="tool-item" onclick="openBatterySettings()">
-                        <div style="display:flex; align-items:center;">
-                            <div class="tool-icon">🔋</div>
-                            <div class="tool-info">
-                                <div class="tool-name">电池优化</div>
-                                <div class="tool-desc">加入白名单，避免后台被清理</div>
-                            </div>
-                        </div>
-                        <div class="action-arrow">›</div>
+                    <div class="liquid-glass sub-module" style="margin:0;" onclick="openAccessibilitySettings()">
+                        <div><h3>🧑‍🦽 无障碍服务</h3><p>重启手机后需重新开启</p></div>
+                        <div style="color:var(--text-sub); font-size:20px;">›</div>
                     </div>
-                    <div class="tool-item" onclick="openAccessibilitySettings()">
-                        <div style="display:flex; align-items:center;">
-                            <div class="tool-icon">🧑‍🦽</div>
-                            <div class="tool-info">
-                                <div class="tool-name">无障碍服务</div>
-                                <div class="tool-desc">重启手机后需要重新开启</div>
-                            </div>
-                        </div>
-                        <div class="action-arrow">›</div>
-                    </div>
-                    <div class="tool-item" onclick="openAutoStartSettings()">
-                        <div style="display:flex; align-items:center;">
-                            <div class="tool-icon">🚀</div>
-                            <div class="tool-info">
-                                <div class="tool-name">自启动权限</div>
-                                <div class="tool-desc">允许后台自启动</div>
-                            </div>
-                        </div>
-                        <div class="action-arrow">›</div>
-                    </div>
-                    <div class="tool-item" style="border-bottom:none;" onclick="openNotificationSettings()">
-                        <div style="display:flex; align-items:center;">
-                            <div class="tool-icon">🔔</div>
-                            <div class="tool-info">
-                                <div class="tool-name">通知权限</div>
-                                <div class="tool-desc">显示运行通知，保活更稳</div>
-                            </div>
-                        </div>
-                        <div class="action-arrow">›</div>
+                    <div class="liquid-glass sub-module" style="margin:0;" onclick="openNotificationSettings()">
+                        <div><h3>🔔 通知权限</h3><p>确保前台服务保活稳定</p></div>
+                        <div style="color:var(--text-sub); font-size:20px;">›</div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- 应用选择页 -->
+        <!-- ================= 应用选择页 ================= -->
         <div id="page-app-select" class="page">
-            <div class="apps-header-wrap">
-                <div class="home-header" style="display:flex;align-items:center;margin-bottom:0;">
-                    <div style="font-size:24px;cursor:pointer;margin-right:16px;" onclick="switchPage('apps', 2)">←</div>
-                    <div><h1 style="font-size:24px;">选择生效领地</h1></div>
+            <div class="scrollable-content">
+                <div class="page-header" style="align-items: center;">
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <div style="font-size:24px; cursor:pointer;" onclick="switchPage('apps', 2)">←</div>
+                        <h1>目标领地</h1>
+                    </div>
+                    <div id="appsStatus" style="font-size:13px; color:rgba(255,255,255,0.8); font-weight:600;">已选 0 个</div>
                 </div>
-            </div>
-            
-            <div class="search-bar glass">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" placeholder="搜索领地" id="appSearch" oninput="filterApps()">
-            </div>
-            
-            <div class="apps-status" id="appsStatus">已选择 0 个领地喵~</div>
-
-            <div class="scroll-container" id="appScrollContainer">
-                <div class="action-list app-list" id="appList" style="gap: 0; margin-bottom: 0; padding-top: 10px;"></div>
+                
+                <div class="search-box">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-sub)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" placeholder="搜索应用..." id="appSearch" oninput="filterApps()">
+                </div>
+                
+                <div id="appList"></div>
             </div>
         </div>
-
-        <!-- 关于页 -->
+        <!-- ================= 关于页 ================= -->
         <div id="page-about" class="page">
-            <div class="about-card glass ">
-                <div class="avatar-wrapper">
-                    <img src="avatar.png" alt="Asia.C" class="avatar">
+            <div class="scrollable-content">
+                <div class="page-header">
+                    <h1>关于 WeaiText</h1>
                 </div>
-                <h2 class="author-name">Asia.C</h2>
-                <p class="author-role">WeaiText 开发者</p>
-                <div class="tag-container">
-                    <span class="tag">✨ 微液态玻璃</span>
-                    <span class="tag">🐾 可爱猫娘 U</span>
+
+                <div class="liquid-glass core-hub" style="text-align:center; padding:32px 24px; margin-bottom:24px;">
+                    <div style="width:80px;height:80px;margin:0 auto 16px;border-radius:50%;background:linear-gradient(135deg,var(--magic-pink),var(--magic-blue));box-shadow:0 0 24px rgba(255,126,179,0.6);display:flex;align-items:center;justify-content:center;font-size:36px;">✨</div>
+                    <h2 style="font-size:22px;font-weight:900;margin-bottom:6px;">WeaiText</h2>
+                    <p style="color:rgba(255,255,255,0.8);font-size:13px;">可爱魔法文本替换工具</p>
+                    <div style="margin-top:12px;font-size:12px;color:rgba(255,255,255,0.6);">Version 1.0.0</div>
                 </div>
-                <div style="margin-top: 20px; font-size: 14px; color: var(--text-sub); font-weight: 600;">
-                    Version 1.0.0
+
+                <div class="section-title">应用信息</div>
+                <div class="liquid-glass list-container">
+                    <div class="list-item">
+                        <span>版本号</span>
+                        <span style="color:rgba(255,255,255,0.7);">v1.0.0</span>
+                    </div>
+                    <div class="list-item">
+                        <span>开发者</span>
+                        <span style="color:rgba(255,255,255,0.7);">Asia.C</span>
+                    </div>
+                    <div class="list-item">
+                        <span>构建时间</span>
+                        <span style="color:rgba(255,255,255,0.7);">2026‑10‑17</span>
+                    </div>
                 </div>
-                <div style="font-size: 12px; color: var(--text-sub); opacity: 0.8; margin-top: 4px;">
-                    感谢使用喵~ ❤️ 天天开心喵~ ❤️
+
+                <div class="section-title">功能说明</div>
+                <div class="liquid-glass list-container">
+                    <div class="list-item"><span>自定义文本替换规则</span></div>
+                    <div class="list-item"><span>自动追加后缀文字</span></div>
+                    <div class="list-item"><span>指定应用生效领地</span></div>
+                    <div class="list-item"><span>无痕后台模式</span></div>
                 </div>
+
+                <div class="section-title">其他</div>
+                <div class="liquid-glass sub-module" style="cursor:pointer;" onclick="showToast('反馈渠道正在建设中，敬请期待！')">
+                    <div>
+                        <h3>反馈与建议</h3>
+                        <p>遇到bug或者想要新功能欢迎反馈</p>
+                    </div>
+                    <div style="color:var(--magic-pink);font-size:20px;">›</div>
+                </div>
+                <div class="liquid-glass sub-module" style="cursor:pointer;" onclick="showToast('开源许可信息：MIT License')">
+                    <div>
+                        <h3>开源许可</h3>
+                        <p>查看开源协议</p>
+                    </div>
+                    <div style="color:rgba(255,255,255,0.5);font-size:20px;">›</div>
+                </div>
+                <div class="liquid-glass sub-module" style="cursor:pointer;" onclick="showToast('喵~ 感谢你的支持！')">
+                    <div>
+                        <h3>致谢</h3>
+                        <p>感谢使用本喵的魔法工具 🐾</p>
+                    </div>
+                    <div style="color:rgba(255,255,255,0.5);font-size:20px;">›</div>
+                </div>
+
+                <div style="text-align:center;margin-top:30px;margin-bottom:40px;color:rgba(255,255,255,0.6);font-size:12px;line-height:1.6;text-shadow: 0 1px 3px rgba(0,0,0,0.5);">
+                    <p>✨ WeaiText · Cute Magic ✨</p>
+                    <p style="margin-top:4px;">祝您每一天都可可爱爱</p>
+                </div>
+
             </div>
         </div>
-
-        <!-- 底部导航 -->
-        <div class="bottom-nav" id="bottomNav">
-            <div class="nav-item active" id="nav-home" onclick="switchPage('home', 0)">
-                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
-                <span>首页</span>
+        <!-- 底部灵动岛 -->
+        <div class="floating-island">
+            <div class="nav-btn active" id="nav-home" onclick="switchPage('home', 0)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
             </div>
-            <div class="nav-item" id="nav-config" onclick="switchPage('config', 1)">
-                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg></div>
-                <span>配置</span>
+            <div class="nav-btn" id="nav-config" onclick="switchPage('config', 1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
             </div>
             
-            <div class="nav-item-center" onclick="openModal()">＋</div>
+            <div class="nav-add-btn" onclick="openModal()">＋</div>
             
-            <div class="nav-item" id="nav-apps" onclick="switchPage('apps', 2)">
-                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></div>
-                <span>工具</span>
+            <div class="nav-btn" id="nav-apps" onclick="switchPage('apps', 2)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
             </div>
-            <div class="nav-item" id="nav-about" onclick="switchPage('about', 3)">
-                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></div>
-                <span>关于</span>
+            <div class="nav-btn" id="nav-about" onclick="switchPage('about', 3)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
             </div>
         </div>
-
         <!-- 弹窗 -->
-        <div class="modal-overlay" id="addModal">
-            <div class="modal-content glass">
-                <h3>召唤新的喵喵魔法</h3>
+        <div class="modal" id="addModal">
+            <div class="modal-content">
+                <h3 style="text-align:center; margin-bottom:20px; font-size:20px; font-weight:900;">新增规则</h3>
                 <input type="text" class="modal-input" id="inputFrom" placeholder="原词 (如: 我)">
                 <input type="text" class="modal-input" id="inputTo" placeholder="替换为 (如: 本喵)">
-                <div class="modal-actions">
+                <div class="modal-btns">
                     <button class="modal-btn btn-cancel" onclick="closeModal()">取消</button>
-                    <button class="modal-btn btn-confirm" onclick="addRule()">确认添加</button>
+                    <button class="modal-btn btn-ok" onclick="addRule()">确认</button>
                 </div>
             </div>
         </div>
-
-    </div> 
-
+    </div>
     <script>
+        // ================= 魔法触摸光点 =================
+        document.addEventListener('pointerdown', function(e) {
+            const wave = document.createElement('div');
+            wave.className = 'click-wave';
+            wave.style.left = e.clientX + 'px';
+            wave.style.top = e.clientY + 'px';
+            wave.style.width = '18px';
+            wave.style.height = '18px';
+            document.body.appendChild(wave);
+            setTimeout(() => { if (wave.parentNode) wave.parentNode.removeChild(wave); }, 400);
+        });
+
+        function showToast(msg) {
+            if (window.AndroidBridge && window.AndroidBridge.toast) {
+                window.AndroidBridge.toast(msg);
+            } else {
+                alert(msg);
+            }
+        }
+
+        // ================= 核心逻辑 =================
         let rules = [];
         let apps = [];
         let isModuleActive = true;
@@ -404,8 +469,7 @@
         let appendMagic = { enabled: false, suffix: '喵' };
 
         let currentIndex = 0;
-        const navItems = document.querySelectorAll('.nav-item');
-        const bottomNav = document.getElementById('bottomNav');
+        const navItems = document.querySelectorAll('.nav-btn');
         const pageIds = ['home', 'config', 'apps', 'about'];
 
         function initAppData() {
@@ -419,50 +483,29 @@
                     }
                 } catch (e) { console.error("获取应用列表失败", e); }
             }
-
-            if (apps.length === 0) {
-                apps = [
-                    { name: '微信', pkg: 'com.tencent.mm', selected: true },
-                    { name: 'QQ', pkg: 'com.tencent.mobileqq', selected: true }
-                ];
-            }
+            if (apps.length === 0) { apps = [{ name: '微信', pkg: 'com.tencent.mm', selected: true }]; }
 
             const hasConfig = loadConfig();
-            if (!hasConfig) {
-                rules = [
-                    { from: '我', to: '本喵' }, 
-                    { from: '你', to: '杂鱼' }, 
-                    { from: '他', to: '喵桑' }, 
-                    { from: '她', to: '喵酱' }, 
-                    { from: '宝宝', to: '蠢鱼' }
-                ];
-                saveConfig(); 
-            }
-            
+            if (!hasConfig) { rules = [{ from: '我', to: '本喵' }]; saveConfig(); }
             renderAll();
             updateAppendUI();
         }
 
         function switchPage(pageId, navIndex) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const targetPage = document.getElementById('page-' + pageId);
-            targetPage.classList.add('active');
-
+            document.getElementById('page-' + pageId).classList.add('active');
             navItems.forEach((item, i) => {
                 if (i === navIndex) item.classList.add('active');
                 else item.classList.remove('active');
             });
             currentIndex = navIndex;
-
             if (pageId === 'config') {
                 renderConfigRules();
                 document.getElementById('appendToggle').classList.toggle('on', appendMagic.enabled);
                 document.getElementById('appendInput').value = appendMagic.suffix;
                 updateAppendUI();
             }
-            if (pageId === 'app-select') {
-                renderApps(document.getElementById('appSearch').value);
-            }
+            if (pageId === 'app-select') { renderApps(document.getElementById('appSearch').value); }
         }
 
         function toggleBackgroundMode() {
@@ -472,6 +515,7 @@
                 window.AndroidBridge.setBackgroundMode(isBackgroundMode);
             }
             saveConfig();
+            showToast(isBackgroundMode ? "无痕模式已开启" : "无痕模式已关闭");
         }
 
         function toggleAppendMagic() {
@@ -489,18 +533,16 @@
 
         function updateAppendUI() {
             const suffix = appendMagic.suffix || '喵';
-            const nameEl = document.getElementById('appendMagicName');
-            const descEl = document.getElementById('appendMagicDesc');
-            const previewEl = document.getElementById('appendPreview');
-            
+            const inputWrap = document.getElementById('appendInputWrap');
             if (appendMagic.enabled) {
-                nameEl.innerText = `句尾加「${suffix}」`;
-                descEl.innerText = `已开启：每句话末尾自动添加「${suffix}」`;
-                previewEl.innerText = `效果预览：今天很开心 → 今天很开心${suffix}`;
+                document.getElementById('appendMagicName').innerText = `后缀「${suffix}」`;
+                document.getElementById('appendMagicDesc').innerText = `已开启自动追加`;
+                document.getElementById('appendPreview').innerText = `预览：今天很开心${suffix}`;
+                inputWrap.style.display = 'block';
             } else {
-                nameEl.innerText = '自定义后缀标识';
-                descEl.innerText = '关闭中：开启后自动添加后缀';
-                previewEl.innerText = `效果预览：关闭`;
+                document.getElementById('appendMagicName').innerText = '自定义后缀';
+                document.getElementById('appendMagicDesc').innerText = '关闭中';
+                inputWrap.style.display = 'none';
             }
         }
 
@@ -509,8 +551,8 @@
                 enabled: isModuleActive, 
                 bgMode: isBackgroundMode, 
                 targets: apps.filter(a => a.selected).map(a => a.pkg), 
-                rules: rules,
-                appendMagic: appendMagic
+                rules: rules, 
+                appendMagic: appendMagic 
             };
         }
 
@@ -524,111 +566,166 @@
 
         function loadConfig() {
             let raw = '';
-            if (window.AndroidBridge && window.AndroidBridge.loadConfig) raw = window.AndroidBridge.loadConfig();
-            if (!raw) { try { raw = localStorage.getItem('weaitext_cfg') || ''; } catch(e) {} }
+            if (window.AndroidBridge && window.AndroidBridge.loadConfig) {
+                try { raw = window.AndroidBridge.loadConfig(); } catch(e) {}
+            }
+            if (!raw) { 
+                try { raw = localStorage.getItem('weaitext_cfg') || ''; } catch(e) {} 
+            }
             
             if (!raw) return false; 
-            
             try {
                 const cfg = JSON.parse(raw);
                 if (typeof cfg.enabled === 'boolean') isModuleActive = cfg.enabled;
-                if (typeof cfg.bgMode === 'boolean') {
-                    isBackgroundMode = cfg.bgMode;
-                    document.getElementById('bgToggle').classList.toggle('on', isBackgroundMode);
+                if (typeof cfg.bgMode === 'boolean') { 
+                    isBackgroundMode = cfg.bgMode; 
+                    document.getElementById('bgToggle').classList.toggle('on', isBackgroundMode); 
                 }
                 if (Array.isArray(cfg.targets)) {
                     apps.forEach(app => app.selected = false);
-                    cfg.targets.forEach(pkg => {
-                        const app = apps.find(a => a.pkg === pkg);
-                        if (app) app.selected = true;
+                    cfg.targets.forEach(pkg => { 
+                        const app = apps.find(a => a.pkg === pkg); 
+                        if (app) app.selected = true; 
                     });
                 }
                 if (Array.isArray(cfg.rules) && cfg.rules.length) rules = cfg.rules;
                 if (cfg.appendMagic) appendMagic = cfg.appendMagic;
+                
+                document.getElementById('mainToggle').classList.toggle('on', isModuleActive);
+                document.getElementById('statusTitle').innerHTML = isModuleActive ? '喵喵出击！ 🐾' : '本喵睡着了 Zzz...';
+                document.getElementById('statusDesc').innerText = isModuleActive ? '魔法引擎运转中' : '魔法暂停施展';
+                
                 return true; 
-            } catch(e) { 
-                console.error("解析配置失败", e); 
-                return false;
-            }
+            } catch(e) { return false; }
         }
 
-        function openBatterySettings() { if (window.AndroidBridge && window.AndroidBridge.openBatterySettings) window.AndroidBridge.openBatterySettings(); }
-        function openAccessibilitySettings() { if (window.AndroidBridge && window.AndroidBridge.openAccessibilitySettings) window.AndroidBridge.openAccessibilitySettings(); }
-        function openAutoStartSettings() { if (window.AndroidBridge && window.AndroidBridge.openAutoStartSettings) window.AndroidBridge.openAutoStartSettings(); }
-        function openNotificationSettings() { if (window.AndroidBridge && window.AndroidBridge.openNotificationSettings) window.AndroidBridge.openNotificationSettings(); }
+        function openBatterySettings() { 
+            if (window.AndroidBridge && window.AndroidBridge.openBatterySettings) window.AndroidBridge.openBatterySettings(); 
+            else showToast("请在系统设置中允许后台运行");
+        }
+        function openAccessibilitySettings() { 
+            if (window.AndroidBridge && window.AndroidBridge.openAccessibilitySettings) window.AndroidBridge.openAccessibilitySettings(); 
+            else showToast("请手动开启无障碍服务");
+        }
+        function openAutoStartSettings() { 
+            if (window.AndroidBridge && window.AndroidBridge.openAutoStartSettings) window.AndroidBridge.openAutoStartSettings(); 
+            else showToast("请手动允许自启动");
+        }
+        function openNotificationSettings() { 
+            if (window.AndroidBridge && window.AndroidBridge.openNotificationSettings) window.AndroidBridge.openNotificationSettings(); 
+            else showToast("请手动允许通知权限");
+        }
 
         function renderRecentRules() {
             const container = document.getElementById('recentRules');
-            if (rules.length === 0) { container.innerHTML = '<div style="text-align:center;color:var(--text-sub);padding:10px;font-size:14px;">暂无魔法喵~</div>'; return; }
-            container.innerHTML = '';
-            rules.slice(-3).reverse().forEach(rule => {
-                const item = document.createElement('div'); item.className = 'recent-item';
-                item.innerHTML = `<span>${rule.from}</span><span class="recent-arrow">🐾</span><span>${rule.to}</span>`;
-                container.appendChild(item);
-            });
+            if (rules.length === 0) { 
+                container.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.6);font-size:14px; padding:20px 0;">暂无数据</div>'; 
+                return; 
+            }
+            container.innerHTML = rules.slice(-3).reverse().map(rule => `
+                <div class="list-item">
+                    <span>${rule.from}</span>
+                    <span style="color:#FFF; font-family:monospace;">➔</span>
+                    <span>${rule.to}</span>
+                </div>
+            `).join('');
         }
 
         function renderConfigRules() {
             const container = document.getElementById('configRuleList');
-            container.innerHTML = '';
-            if (rules.length === 0) { container.innerHTML = '<div style="text-align:center;color:var(--text-sub);padding:30px;font-size:14px;">暂无魔法，点击右上角 + 召唤</div>'; return; }
-            rules.forEach((rule, index) => {
-                const item = document.createElement('div'); item.className = 'config-rule-item';
-                item.innerHTML = `
-                    <div style="display:flex;align-items:center;">
-                        <span style="font-weight:600;">${rule.from}</span>
-                        <span style="color:var(--text-sub);margin:0 8px;">🐾</span>
-                        <span style="font-weight:600;">${rule.to}</span>
-                    </div>
-                    <div class="delete-btn" onclick="deleteRule(${index})">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </div>`;
-                container.appendChild(item);
-            });
+            if (rules.length === 0) { 
+                container.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.6);padding:20px;font-size:14px;">暂无规则</div>'; 
+                return; 
+            }
+            container.innerHTML = rules.map((rule, index) => `
+                <div class="list-item" style="justify-content:flex-start; gap:12px;">
+                    <span>${rule.from}</span>
+                    <span style="color:rgba(255,255,255,0.6); font-family:monospace;">➔</span>
+                    <span>${rule.to}</span>
+                    <div onclick="deleteRule(${index})" style="margin-left:auto; color:#FF7EB3; padding:8px; text-shadow: 0 0 10px rgba(0,0,0,0.5);">✕</div>
+                </div>
+            `).join('');
         }
         
-        // 🌟 核心修改：渲染时，选中的应用强制置顶
         function renderApps(filterText = '') {
             const container = document.getElementById('appList');
-            container.innerHTML = '';
             let selectedCount = 0;
+            let sortedApps = [...apps].sort((a, b) => (a.selected === b.selected) ? a.name.localeCompare(b.name) : (a.selected ? -1 : 1));
             
-            // 先拷贝一份数组并按照 [已选中优先] + [拼音排序] 进行排序
-            let sortedApps = [...apps].sort((a, b) => {
-                if (a.selected && !b.selected) return -1;
-                if (!a.selected && b.selected) return 1;
-                return a.name.localeCompare(b.name);
-            });
-
-            sortedApps.forEach((app) => {
-                if (filterText && !app.name.toLowerCase().includes(filterText.toLowerCase()) && !app.pkg.toLowerCase().includes(filterText.toLowerCase())) return;
+            container.innerHTML = sortedApps.map(app => {
+                if (filterText && !app.name.toLowerCase().includes(filterText.toLowerCase()) && !app.pkg.toLowerCase().includes(filterText.toLowerCase())) return '';
                 if (app.selected) selectedCount++;
-                
-                // 找到它在原数组中的真实索引
                 const originalIndex = apps.findIndex(a => a.pkg === app.pkg);
-                
-                const item = document.createElement('div');
-                item.className = `app-item ${app.selected ? 'selected' : ''}`;
-                // 点击事件依然传真实索引，但触发后重新渲染列表以实现置顶动画
-                item.onclick = function() { toggleApp(originalIndex); };
-                item.innerHTML = `
-                    <div class="app-info">
-                        <div class="app-name">${app.name}</div>
-                        <div class="app-pkg">${app.pkg}</div>
+                return `
+                    <div class="app-card ${app.selected ? 'selected' : ''}" onclick="toggleApp(${originalIndex})">
+                        <div>
+                            <div class="app-title">${app.name}</div>
+                            <div class="app-pkg">${app.pkg}</div>
+                        </div>
+                        <div class="app-check">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
                     </div>
-                    <div class="app-check">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>`;
-                container.appendChild(item);
-            });
-            updateAppStatusUI();
+                `;
+            }).join('');
+            
+            document.getElementById('appCount').innerText = selectedCount;
+            document.getElementById('toolSelectedCount').innerText = `已选 ${selectedCount} 个`;
+            document.getElementById('appsStatus').innerText = `已选 ${selectedCount} 个`;
+        }
+
+        function toggleApp(index) { 
+            apps[index].selected = !apps[index].selected; 
+            saveConfig(); 
+            renderApps(document.getElementById('appSearch').value); 
         }
         
-        function updateAppStatusUI() {
-            let selectedCount = apps.filter(a => a.selected).length;
-            document.getElementById('appCount').innerText = selectedCount;
-            document.getElementById('toolSelectedCount').innerText = `已选 ${selectedCount} 个应用`;
-            document.getElementById('appsStatus').innerText = selectedCount > 0 ? `已选择 ${selectedCount} 个领地喵~` : '未选择领地（本喵出不去）';
+        function filterApps() { 
+            renderApps(document.getElementById('appSearch').value); 
+        }
+        
+        function deleteRule(index) { 
+            rules.splice(index, 1); 
+            renderAll(); 
+            saveConfig(); 
+        }
+        
+        function clearRules() { 
+            if (rules.length === 0) return; 
+            if (confirm('确定清空所有规则吗？')) { 
+                rules = []; 
+                renderAll(); 
+                saveConfig(); 
+                showToast('所有规则已清空');
+            } 
+        }
+        
+        function toggleMainSwitch() {
+            isModuleActive = !isModuleActive;
+            document.getElementById('mainToggle').classList.toggle('on', isModuleActive);
+            document.getElementById('statusTitle').innerHTML = isModuleActive ? '喵喵出击！ 🐾' : '本喵睡着了 Zzz...';
+            document.getElementById('statusDesc').innerText = isModuleActive ? '魔法引擎运转中' : '魔法暂停施展';
+            saveConfig();
+        }
+        
+        function openModal() { document.getElementById('addModal').classList.add('active'); }
+        function closeModal() { 
+            document.getElementById('addModal').classList.remove('active'); 
+            document.getElementById('inputFrom').value = ''; 
+            document.getElementById('inputTo').value = ''; 
+        }
+        
+        function addRule() {
+            const from = document.getElementById('inputFrom').value.trim(), to = document.getElementById('inputTo').value.trim();
+            if (from && to) { 
+                rules.push({ from, to }); 
+                renderAll(); 
+                closeModal(); 
+                saveConfig(); 
+                showToast('规则添加成功');
+            } else { 
+                showToast('请填写完整的魔法词条喵~'); 
+            }
         }
 
         function renderAll() {
@@ -636,37 +733,6 @@
             renderRecentRules();
             renderConfigRules();
             renderApps(document.getElementById('appSearch').value);
-        }
-
-        // 🌟 核心修改：点击后改变状态，并立刻重新渲染列表（实现置顶）
-        function toggleApp(index) {
-            apps[index].selected = !apps[index].selected;
-            saveConfig();
-            renderApps(document.getElementById('appSearch').value);
-        }
-
-        function filterApps() { renderApps(document.getElementById('appSearch').value); }
-        function deleteRule(index) { rules.splice(index, 1); renderAll(); saveConfig(); }
-        function clearRules() { if (rules.length === 0) return; if (confirm('确定要忘记所有魔法吗？喵呜...')) { rules = []; renderAll(); saveConfig(); } }
-        
-        function toggleMainSwitch() {
-            isModuleActive = !isModuleActive;
-            const toggle = document.getElementById('mainToggle'), title = document.getElementById('statusTitle'), desc = document.getElementById('statusDesc');
-            if (isModuleActive) {
-                toggle.classList.add('on'); title.innerText = '状态：喵喵出击！'; title.style.color = 'var(--text-main)';
-                desc.innerText = `正在巡视 ${apps.filter(a => a.selected).length} 个领地喵~`;
-            } else {
-                toggle.classList.remove('on'); title.innerText = '状态：本喵睡着了 Zzz...'; title.style.color = 'var(--text-sub)';
-                desc.innerText = '本喵已休息，魔法暂停施展';
-            }
-            saveConfig();
-        }
-        
-        function openModal() { document.getElementById('addModal').classList.add('active'); }
-        function closeModal() { document.getElementById('addModal').classList.remove('active'); document.getElementById('inputFrom').value = ''; document.getElementById('inputTo').value = ''; }
-        function addRule() {
-            const from = document.getElementById('inputFrom').value.trim(), to = document.getElementById('inputTo').value.trim();
-            if (from && to) { rules.push({ from, to }); renderAll(); closeModal(); saveConfig(); } else { alert('请填写完整的魔法词条喵~'); }
         }
 
         initAppData();
