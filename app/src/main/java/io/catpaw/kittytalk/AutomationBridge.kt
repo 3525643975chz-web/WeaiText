@@ -70,7 +70,6 @@ class AutomationBridge : AccessibilityService() {
     private var shizukuKeepAlive = false
     
     private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
-    
     private val TEXT_CHANGE_DELAY_MS = 150L 
     private var pendingTextRunnable: Runnable? = null
     private val CONTENT_CHANGE_DELAY_MS = 150L
@@ -346,34 +345,24 @@ class AutomationBridge : AccessibilityService() {
                     }
 
                     if (isWechat) {
-                        // 🌟 微信特攻模式
-                        addLog("检测到微信输入框，执行强行注入")
+                        // 🌟 微信无感替换最终杀招：全选+强塞剪贴板，不弹悬浮窗！
+                        addLog("微信替换连招启动")
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("weaitext", newText)
+                        clipboard.setPrimaryClip(clip)
                         
-                        // 1. 先尝试标准的强塞
-                        var success = setText(inputNode, newText)
-                        if (!success) {
-                            // 2. 失败则走剪贴板全选粘贴
-                            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            val clip = ClipData.newPlainText("weaitext", newText)
-                            clipboard.setPrimaryClip(clip)
-                            
-                            inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                            
-                            val selectArgs = Bundle()
-                            selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
-                            selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, raw.length) // 全选旧文本
-                            inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectArgs)
-                            
-                            success = inputNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-                        }
+                        // 1. 强制获取焦点
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                        // 2. 全选
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_SELECT_ALL)
+                        val selectArgs = Bundle()
+                        selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
+                        selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, raw.length)
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectArgs)
+                        // 3. 粘贴
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
                         
-                        if (success) {
-                            lastSet = newText
-                            setCursorEnd(inputNode, cursorIndex)
-                            addLog("微信替换成功！")
-                        } else {
-                            addLog("微信拦截了替换")
-                        }
+                        lastSet = newText
                         
                     } else {
                         // 其他应用正常写入
@@ -381,13 +370,13 @@ class AutomationBridge : AccessibilityService() {
                             lastSet = newText
                             setCursorEnd(inputNode, cursorIndex)
                             OverlayPrefs.recordWriteSuccess(this, lastEventPkg)
-                            addLog("替换成功：\"${raw.take(20)}\" -> \"${newText.take(20)}\"")
+                            addLog("替换成功")
                         } else {
                             OverlayPrefs.resetWriteSuccessCount(this, lastEventPkg)
                             if (OverlayPrefs.isNoPopupPackage(this, lastEventPkg) || OverlayPrefs.isInCooldown(this) || OverlayInput.isCollapsed()) {
-                                addLog("写入失败，不弹出悬浮窗")
+                                addLog("写入失败")
                             } else {
-                                addLog("写入文本失败，启用悬浮窗输入")
+                                addLog("写入失败，启用悬浮窗")
                                 try { OverlayInput.show(this) } catch (e: Exception) {}
                             }
                         }
@@ -519,7 +508,6 @@ class AutomationBridge : AccessibilityService() {
             }
         }
 
-        // 🌟 针对微信的专属节点暴力全树查找
         if (isWechat) {
             val wxNode = findWechatInput(root)
             if (wxNode != null) return wxNode
@@ -537,10 +525,8 @@ class AutomationBridge : AccessibilityService() {
         }
     }
 
-    // 微信专属查找逻辑
     private fun findWechatInput(root: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
         if (root == null) return null
-        // 只要是个 EditText 并且是可用的，就抓过来
         val cls = root.className?.toString() ?: ""
         if (cls.contains("EditText") && root.isFocused) {
             return AccessibilityNodeInfo.obtain(root)
