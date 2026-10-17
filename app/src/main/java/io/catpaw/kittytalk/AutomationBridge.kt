@@ -353,8 +353,7 @@ class AutomationBridge : AccessibilityService() {
                         
                         // 1. 强制获取焦点
                         inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                        // 2. 全选
-                        inputNode.performAction(AccessibilityNodeInfo.ACTION_SELECT_ALL)
+                        // 2. 全选 (删除了错误的 ACTION_SELECT_ALL)
                         val selectArgs = Bundle()
                         selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
                         selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, raw.length)
