@@ -1,8 +1,11 @@
 package io.catpaw.kittytalk
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.webkit.JavascriptInterface
@@ -11,6 +14,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -28,76 +33,8 @@ class LauncherActivity : AppCompatActivity() {
     internal lateinit var binding: ActivityMainBinding
     internal lateinit var cfg: SettingsRepository.Config
 
-    internal val maxVisible = 3
-    internal var suffixesExpanded = false
-    internal var rulesExpanded = false
-    internal var wholeRulesExpanded = false
-
-    internal var exportTarget: List<Category>? = null
-    internal val exportLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("text/plain")
-    ) { uri: Uri? ->
-        if (uri != null) {
-            try {
-                contentResolver.openOutputStream(uri)?.use {
-                    val src = exportTarget ?: cfg.categories
-                    it.write(SettingsRepository.toExportJson(SettingsRepository.Config(src.toMutableList())).toByteArray())
-                }
-                toast("已导出规则")
-            } catch (e: Exception) {
-                toast("导出失败：" + e.message)
-            }
-            exportTarget = null
-        }
-    }
-
-    internal val importLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            try {
-                val text = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-                val imported = if (text != null) SettingsRepository.parseImport(text) else null
-                if (imported == null) {
-                    toast("导入失败：文件格式无效")
-                } else {
-                    mergeImport(imported)
-                }
-            } catch (e: Exception) {
-                toast("导入失败：" + e.message)
-            }
-        }
-    }
-
-    internal val themeLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (PaletteStore.load(this).version != lastThemeVersion) {
-            recreate()
-        }
-    }
-
     internal val funcKey = "func_enabled"
-    internal val punctKey = "punctuation_trigger"
-    internal val punctEatPeriodKey = "punct_eat_period"
-    internal val sentenceBlockKey = "sentence_block_chars"
-    internal val sentenceTriggerKey = "sentence_trigger"
-    internal val atSkipKey = "at_skip"
-    internal val shizukuKey = "shizuku_keepalive"
-    internal val prefWarningVersion = "warning_version"
-    internal val prefLogVisible = "log_visible"
     internal val prefCurrentTab = "current_tab"
-
-    internal val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
-        override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) { }
-    }
-    internal val shizukuBinderListener = Shizuku.OnBinderReceivedListener { }
-
-    internal var logFollowBottom = true
-    internal var logProgrammaticScroll = false
-
-    internal var thanksClickCount = 0
-    internal var lastThanksClick = 0L
 
     internal var lastThemeVersion = -1
 
@@ -129,19 +66,39 @@ class LauncherActivity : AppCompatActivity() {
         lastThemeVersion = themeCfg.version
         cfg = SettingsRepository.load(this)
 
-        // 每次打开软件，默默拉起后台服务
-        LifelineService.start(this)
+        // 🌟 申请通知权限（Android 13+），防止挂前台服务闪退
+        requestNotificationPermissionIfNeeded()
     }
 
-    // 🌟 核心逻辑：监听用户按 Home 键退回桌面
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+                != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
+            } else {
+                LifelineService.start(this)
+            }
+        } else {
+            LifelineService.start(this)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1001) {
+            // 启动后台服务，挂上通知保活
+            LifelineService.start(this)
+        }
+    }
+
+    // 🌟 核心：监听按 Home 键
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        // 如果网页里打开了“多任务隐身”开关
+        // 如果开启了“魔法后台消除”开关，主动自杀并从多任务列表消失
         if (darkPrefs().getBoolean("bg_mode_hide", false)) {
-            // 强行结束当前界面，并从多任务列表中移除
             finishAndRemoveTask()
         }
-        // 如果没打开，就什么都不做，系统会正常把 App 留在多任务列表里
+        // 没开开关的话，什么都不做，系统因为有前台通知，会稳稳留住它
     }
 
     inner class WebBridge {
@@ -175,7 +132,6 @@ class LauncherActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun setBackgroundMode(enabled: Boolean) {
-            // 网页一点开关，立刻存入本地状态
             darkPrefs().edit().putBoolean("bg_mode_hide", enabled).apply()
         }
 
@@ -254,10 +210,8 @@ class LauncherActivity : AppCompatActivity() {
                     dao.replaceAllowlist(allowlist)
 
                     AutomationBridge.instance?.reload()
-                    
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    runOnUiThread { toast("同步失败：" + e.message) }
                 }
             }.start()
         }
@@ -268,7 +222,7 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    internal fun maybeShowFirstWarning() {}
+    // ----- 防止原代码报错的空壳 -----
     internal fun updateThemeStatus() {}
     internal fun updateServiceStatus() {}
     internal fun showTab(menuId: Int) {}
@@ -299,8 +253,6 @@ class LauncherActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         AutomationBridge.logListener = null
-        try { Shizuku.removeRequestPermissionResultListener(shizukuListener) } catch (_: Throwable) {}
-        PrivilegeBridge.removeBinderListener(shizukuBinderListener)
         super.onDestroy()
     }
 
