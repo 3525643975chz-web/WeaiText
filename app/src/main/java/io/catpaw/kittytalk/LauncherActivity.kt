@@ -81,8 +81,8 @@ class LauncherActivity : AppCompatActivity() {
         
         val webView = WebView(this)
         
-        // 🌟 核心修复 1：把 WebView 的背景色设成深色，消除网页加载前的白屏闪烁
-        webView.setBackgroundColor(Color.parseColor("#06080E")) 
+        // 🌟 核心修复 1：把 WebView 的背景色设成透明，让 HTML 背景图直接透出来
+        webView.setBackgroundColor(Color.TRANSPARENT) 
         
         val settings = webView.settings
         settings.javaScriptEnabled = true
@@ -93,8 +93,8 @@ class LauncherActivity : AppCompatActivity() {
         webView.addJavascriptInterface(WebBridge(), "AndroidBridge")
         webView.loadUrl("file:///android_asset/index.html")
         
-        // 🌟 核心修复 2：把 Activity 的底层窗口也设成深色
-        window.setBackgroundDrawable(ColorDrawable(Color.parseColor("#06080E")))
+        // 🌟 核心修复 2：把 Activity 的底层窗口也设成透明
+        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         setContentView(webView)
 
         applySystemBarInsets()
