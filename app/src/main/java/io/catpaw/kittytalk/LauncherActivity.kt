@@ -73,7 +73,6 @@ class LauncherActivity : AppCompatActivity() {
         
         super.onCreate(savedInstanceState) 
         
-        // 设置窗口透明
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         if (themeCfg.palette == Palette.SYSTEM) {
@@ -83,7 +82,6 @@ class LauncherActivity : AppCompatActivity() {
         
         val webView = WebView(this)
         
-        // 强制 WebView 渲染层透明，保留 GPU 硬件加速处理毛玻璃
         webView.setBackgroundColor(Color.TRANSPARENT) 
         
         val settings = webView.settings
@@ -180,16 +178,17 @@ class LauncherActivity : AppCompatActivity() {
                 
                 for (info in resolveInfos) {
                     val pkgName = info.activityInfo.packageName
+                    // 过滤掉自己，防止自己替换自己
+                    if (pkgName == packageName) continue
                     if (addedPkgs.contains(pkgName)) continue
                     
                     val appInfo = pm.getApplicationInfo(pkgName, 0)
-                    if ((appInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) {
-                        val obj = JSONObject()
-                        obj.put("name", pm.getApplicationLabel(appInfo).toString())
-                        obj.put("pkg", pkgName)
-                        jsonArray.put(obj)
-                        addedPkgs.add(pkgName)
-                    }
+                    // 去掉了一些系统底层没图标的服务，只要能在桌面显示的我们都抓出来
+                    val obj = JSONObject()
+                    obj.put("name", pm.getApplicationLabel(appInfo).toString())
+                    obj.put("pkg", pkgName)
+                    jsonArray.put(obj)
+                    addedPkgs.add(pkgName)
                 }
                 return jsonArray.toString()
             } catch (e: Exception) {
