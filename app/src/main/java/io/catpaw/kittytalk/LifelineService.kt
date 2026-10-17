@@ -1,8 +1,12 @@
 package io.catpaw.kittytalk
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
 
 class LifelineService : Service() {
@@ -11,7 +15,11 @@ class LifelineService : Service() {
         fun start(context: Context) {
             try {
                 val intent = Intent(context, LifelineService::class.java)
-                context.startService(intent)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -28,8 +36,45 @@ class LifelineService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannel()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // 只要不被杀，就一直待着，绝不弹任何通知
+        try {
+            val notification = createNotification()
+            startForeground(1001, notification)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         return START_STICKY
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "lifeline_channel",
+                "WeaiText 魔法运行中",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            channel.description = "保持魔法服务在后台运行"
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun createNotification(): Notification {
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, "lifeline_channel")
+        } else {
+            Notification.Builder(this)
+        }
+        
+        return builder
+            .setContentTitle("WeaiText 魔法运行中")
+            .setContentText("本喵正在后台为你施法...")
+            .setSmallIcon(android.R.drawable.ic_menu_compass)
+            .build()
     }
 }
