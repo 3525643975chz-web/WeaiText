@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 统一的浅色启动底色 -->
     <style name="Theme.QQReplyApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowBackground">#FFF0F5</item>
+        <!-- 彻底透明背景 -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowDisablePreview">true</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowAnimationStyle">@null</item>
+        <!-- 核心：干掉 Android 12+ 的强制启动 Splash 图 -->
+        <item name="android:windowSplashScreenBackground">@android:color/transparent</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
     </style>
 
     <style name="Theme.TilePanel" parent="Theme.Material3.DayNight.NoActionBar">
