@@ -185,16 +185,8 @@ object PhraseProcessor {
     /** 整句幂等还原：按分句分隔符拆子句，剥掉每个子句末尾已附加的尾巴 */
     fun restoreSentenceSuffixes(text: String): String = splitter.restoreAll(text)
 
-    /** 句尾附加去重：text 末尾与 suffix 前缀重叠则去掉重叠部分（供 doProcess 调用，与 transformFloat 保持一致） */
-    fun stripOverlap(text: String, suffix: String): String = splitter.stripOverlap(text, suffix)
-
-    /** 计算两个字符串的最长公共前缀长度 */
-    private fun commonPrefixLength(a: String, b: String): Int {
-        val maxLen = minOf(a.length, b.length)
-        var i = 0
-        while (i < maxLen && a[i] == b[i]) i++
-        return i
-    }
+    /** 句尾附加去重：text 末尾与 suffix 前缀重叠则去掉重叠部分（🌟 已修改：强制不去重，保证"本喵"+"喵"="本喵喵"） */
+    fun stripOverlap(text: String, suffix: String): String = text
 
     /** 整段技术文本识别：至少命中 3 个特征才判定（避免误伤正常聊天文本） */
     fun isTechnicalText(s: String): Boolean = tech.isTechnicalText(s)
@@ -405,10 +397,10 @@ object PhraseProcessor {
         }
         var text = if (pt != null) {
             val attached = if (pt.hasTrigger && !punctOnly) tail else ""
-            val core = if (attached.isNotEmpty()) splitter.stripOverlap(replaced, attached) else replaced
+            val core = if (attached.isNotEmpty()) replaced else replaced // 🌟 核心修改：去掉了 stripOverlap，强制不去重
             base + core + attached + pt.trailing + (if (pt.trailingNewline) "\n" else "")
         } else {
-            val core = if (tail.isNotEmpty()) splitter.stripOverlap(coreFinal, tail) else coreFinal
+            val core = coreFinal // 🌟 核心修改：去掉了 stripOverlap，强制不去重
             base + core + tail + trailingPunct
         }
         // —— 纯句尾附加/分句模式（非标点触发、非删除）的光标与"顶开"逻辑 ——
@@ -477,10 +469,8 @@ object PhraseProcessor {
                         val nl = if (inserted.contains('\n')) "\n" else ""
                         lastUserPart + stay + rawTail + moved + nl
                     } else {
-                        // 用户在已有后缀前插入文字，插入内容经规则替换后，
-                        // 替换结果末尾与已有后缀开头可能重复（如整句结果"主人早上好喵"+已有后缀"喵呜～"），
-                        // 必须先 stripOverlap 去重再拼后缀，否则叠成"主人早上好喵喵呜～"
-                        lastUserPart + splitter.stripOverlap(res2.first, rawTail) + rawTail
+                        // 🌟 核心修改：去掉了 stripOverlap，强制不去重
+                        lastUserPart + res2.first + rawTail
                     }
                     resultText = t
                     val stayLen = if (punctInsert) inserted.count { it in TAIL_STAY_MARKS } else 0
@@ -493,8 +483,8 @@ object PhraseProcessor {
                 }
             } else if (incremental && !isPunctOnly(delta)) {
                 val res2 = applyRulesNoSuffix(delta, false)
-                // 同上前缀：替换结果末尾与已有后缀开头重复时先去重，避免叠字（如"喵喵"）
-                val t = lastUserPart + splitter.stripOverlap(res2.first, lastTail) + lastTail
+                // 🌟 核心修改：去掉了 stripOverlap，强制不去重
+                val t = lastUserPart + res2.first + lastTail
                 corrected = true
                 cursor = t.length - lastTail.length
                 resultText = t
