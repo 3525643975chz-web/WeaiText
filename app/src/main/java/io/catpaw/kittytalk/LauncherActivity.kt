@@ -17,8 +17,11 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.color.DynamicColors
+import io.catpaw.kittytalk.data.* // 导入数据库相关的类
 import io.catpaw.kittytalk.databinding.ActivityMainBinding
+import org.json.JSONObject
 import rikka.shizuku.Shizuku
+import java.lang.Exception
 
 class LauncherActivity : AppCompatActivity() {
 
@@ -163,11 +166,7 @@ class LauncherActivity : AppCompatActivity() {
         updateServiceStatus()
         updateThemeStatus()
 
-        // 原版是通过底部导航栏切换页面的，现在被网页覆盖了，可以不执行
-        // val savedTab = darkPrefs().getInt(prefCurrentTab, R.id.nav_home)
-        // showTab(savedTab)
-        
-        // ❌ 已经取消了原版弹窗：
+        // 取消原版弹窗
         // maybeShowFirstWarning()
     }
 
@@ -176,16 +175,14 @@ class LauncherActivity : AppCompatActivity() {
         @JavascriptInterface
         fun openBatterySettings() {
             runOnUiThread {
-                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                startActivity(intent)
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             }
         }
 
         @JavascriptInterface
         fun openAccessibilitySettings() {
             runOnUiThread {
-                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                startActivity(intent)
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
             }
         }
 
@@ -207,20 +204,101 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
 
-        // ✅ 接收网页传来的 JSON 配置，真正存入本地
+        // ✅ 终极核心：将网页传过来的 JSON 解析并注入 Room 数据库！
         @JavascriptInterface
         fun saveConfig(json: String) {
-            // 存入 SharedPreferences，哪怕杀后台也能保存
-            darkPrefs().edit().putString("weaitext_web_config", json).apply()
-            runOnUiThread {
-                // Toast.makeText(this@LauncherActivity, "配置已同步到本地", Toast.LENGTH_SHORT).show()
-            }
+            // 数据库操作推荐在子线程，避免卡顿网页
+            Thread {
+                try {
+                    val root = JSONObject(json)
+                    val dao = KittyDatabase.get(this@LauncherActivity).phrases()
+
+                    // 1. 保存全局开关到 SharedPreferences
+                    val enabled = root.optBoolean("enabled", true)
+                    darkPrefs().edit().putBoolean(funcKey, enabled).apply()
+
+                    // 2. 构造分类（原版需要至少一个分类才能存规则）
+                    val defaultCid = 1L
+                    val categories = listOf(CategoryEntity(cid = defaultCid, name = "网页配置", active = 1))
+
+                    // 3. 解析规则并转换
+                    val rulesList = mutableListOf<RuleEntity>()
+                    val rulesJson = root.optJSONArray("rules")
+                    if (rulesJson != null) {
+                        for (i in 0 until rulesJson.length()) {
+                            val ruleObj = rulesJson.getJSONObject(i)
+                            rulesList.add(
+                                RuleEntity(
+                                    cid = defaultCid,
+                                    trigger = ruleObj.optString("from"),
+                                    replacement = ruleObj.optString("to"),
+                                    active = 1, // 启用
+                                    whole = 0,  // 0代表子串匹配（非整句）
+                                    exclude = 0, // 不排除
+                                    seq = i
+                                )
+                            )
+                        }
+                    }
+
+                    // 4. 解析后缀附加
+                    val suffixesList = mutableListOf<SuffixEntity>()
+                    val appendMagic = root.optJSONObject("appendMagic")
+                    if (appendMagic != null && appendMagic.optBoolean("enabled")) {
+                        val suffixText = appendMagic.optString("suffix", "喵")
+                        if (suffixText.isNotEmpty()) {
+                            suffixesList.add(
+                                SuffixEntity(
+                                    cid = defaultCid,
+                                    content = suffixText,
+                                    active = 1,
+                                    seq = 0
+                                )
+                            )
+                        }
+                    }
+
+                    // 写入数据库（替换旧数据）
+                    dao.replaceCategories(categories, rulesList, suffixesList)
+
+                    // 5. 解析生效应用白名单
+                    val allowlist = mutableListOf<AllowlistEntity>()
+                    val targetsJson = root.optJSONArray("targets")
+                    if (targetsJson != null) {
+                        for (i in 0 until targetsJson.length()) {
+                            val pkg = targetsJson.getString(i)
+                            allowlist.add(
+                                AllowlistEntity(
+                                    pkg = pkg,
+                                    active = 1,
+                                    clipboard = 0,
+                                    label = ""
+                                )
+                            )
+                        }
+                    }
+                    dao.replaceAllowlist(allowlist)
+
+                    // 6. 通知后台核心服务重新读取配置！
+                    AutomationBridge.instance?.reload()
+
+                    runOnUiThread {
+                        toast("网页配置已同步生效！")
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    runOnUiThread {
+                        toast("同步失败：" + e.message)
+                    }
+                }
+            }.start()
         }
 
-        // ✅ 把本地存好的配置读出来，返回给网页恢复状态
         @JavascriptInterface
         fun loadConfig(): String {
-            return darkPrefs().getString("weaitext_web_config", "") ?: ""
+            // 网页如果向原生要配置，可以在这里从数据库读出来返回。
+            // 目前网页有 localStorage，不需要原生的数据也能恢复状态，所以先返回空。
+            return "" 
         }
     }
 
