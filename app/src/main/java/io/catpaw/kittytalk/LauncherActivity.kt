@@ -35,7 +35,6 @@ class LauncherActivity : AppCompatActivity() {
     internal lateinit var binding: ActivityMainBinding
     internal lateinit var cfg: SettingsRepository.Config
 
-    // ================= 补全原版遗留的空壳变量 =================
     internal val maxVisible = 3
     internal var suffixesExpanded = false
     internal var rulesExpanded = false
@@ -68,21 +67,28 @@ class LauncherActivity : AppCompatActivity() {
     internal val prefCurrentTab = "current_tab"
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 强行干掉窗口背景色（防止系统底层白/黑屏）
+        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        
         val themeCfg = PaletteStore.load(this)
         AppCompatDelegate.setDefaultNightMode(PaletteStore.appcompatNightMode(themeCfg.themeMode))
         setTheme(PaletteStore.themeStyleRes(themeCfg.palette))
+        
         super.onCreate(savedInstanceState)
+        
         if (themeCfg.palette == Palette.SYSTEM) {
             DynamicColors.applyToActivityIfAvailable(this)
         }
         setupEdgeToEdge()
         
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        
         val webView = WebView(this)
         
-        // 🌟 核心修复 1：把 WebView 的背景色设成透明，让 HTML 背景图直接透出来
+        // 初始设为透明，防止加载时闪背景色
         webView.setBackgroundColor(Color.TRANSPARENT) 
+        webView.setLayerType(WebView.LAYER_TYPE_HARDWARE, null)
+        
+        // 🌟 核心：让整个网页先透明，加载完后平滑淡入（0.6秒）
+        webView.alpha = 0f
         
         val settings = webView.settings
         settings.javaScriptEnabled = true
@@ -93,9 +99,16 @@ class LauncherActivity : AppCompatActivity() {
         webView.addJavascriptInterface(WebBridge(), "AndroidBridge")
         webView.loadUrl("file:///android_asset/index.html")
         
-        // 🌟 核心修复 2：把 Activity 的底层窗口也设成透明
-        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         setContentView(webView)
+
+        // 延迟300毫秒后开始淡入（不管页面加载完没有，整个容器先浮现）
+        webView.postDelayed({
+            webView.animate()
+                .alpha(1f)
+                .setDuration(600)
+                .setStartDelay(100)
+                .start()
+        }, 300)
 
         applySystemBarInsets()
         lastThemeVersion = themeCfg.version
@@ -124,7 +137,6 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    // 🌟 核心：监听按 Home 键，如果开了隐身，直接干掉多任务卡片
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         if (darkPrefs().getBoolean("bg_mode_hide", false)) {
@@ -253,7 +265,6 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    // ----- 防止原代码报错的空壳方法 -----
     internal fun updateThemeStatus() {}
     internal fun updateServiceStatus() {}
     internal fun showTab(menuId: Int) {}
