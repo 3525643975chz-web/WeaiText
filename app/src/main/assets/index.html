@@ -8,16 +8,10 @@
         :root {
             --text-main: #000000;
             --text-sub: #333333;
-            
             --bg-image: url('background.jpg'); 
-            
-            /* 玻璃卡片底色 */
             --glass-bg: rgba(255, 255, 255, 0.25); 
-            
-            /* 核心：极度通透的半透明粉，让所有按钮都像水膜 */
             --magic-pink-trans: rgba(255, 75, 139, 0.45); 
             --magic-pink: #FF4B8B;
-            
             --bounce-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -49,60 +43,36 @@
         .app-container { 
             width: 100%; max-width: 480px; height: 100%; position: relative; 
             display: flex; flex-direction: column; margin: 0 auto; 
-            /* 极简平滑淡入 */
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0; animation: fadeIn 0.8s ease-out forwards;
         }
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
+        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
 
-        /* ================= 核心：通透白玻璃倒角 ================= */
         .liquid-glass {
             background: var(--glass-bg);
-            /* 略微降低模糊度，确保不卡顿 */
             backdrop-filter: blur(10px) saturate(150%); 
             -webkit-backdrop-filter: blur(10px) saturate(150%);
-            border-radius: 32px; 
-            position: relative; 
-            overflow: hidden;
+            border-radius: 32px; position: relative; overflow: hidden;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
             transition: transform 0.4s var(--bounce-easing), background 0.3s;
         }
-
         .liquid-glass::before {
             content: ''; position: absolute; inset: 0; border-radius: 32px; pointer-events: none;
-            box-shadow: 
-                inset 0 0 0 1px rgba(0, 0, 0, 0.04),
-                inset 0 0 0 1.5px rgba(255, 255, 255, 0.8),
-                inset 0 6px 12px rgba(255, 255, 255, 0.9),
-                inset 0 -4px 10px rgba(255, 255, 255, 0.4);
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04), inset 0 0 0 1.5px rgba(255, 255, 255, 0.8), inset 0 6px 12px rgba(255, 255, 255, 0.9), inset 0 -4px 10px rgba(255, 255, 255, 0.4);
             z-index: 2;
         }
-
-        .liquid-glass:active { 
-            transform: scale(0.92); 
-            background: rgba(255, 255, 255, 0.45);
-        }
+        .liquid-glass:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.45); }
         
         .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; }
         .page.active { display: flex; animation: pageBounceIn 0.5s var(--bounce-easing) forwards; }
-        @keyframes pageBounceIn { 
-            0% { opacity: 0; transform: translateY(30px) scale(0.95); } 
-            100% { opacity: 1; transform: translateY(0) scale(1); } 
-        }
+        @keyframes pageBounceIn { 0% { opacity: 0; transform: translateY(30px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
         
         .scrollable-content { 
-            flex: 1; overflow-y: auto; 
-            padding: calc(80px + env(safe-area-inset-top)) 24px calc(120px + env(safe-area-inset-bottom)) 24px; 
-            -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; 
-            position: relative; z-index: 3; 
+            flex: 1; overflow-y: auto; padding: calc(80px + env(safe-area-inset-top)) 24px calc(120px + env(safe-area-inset-bottom)) 24px; 
+            -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; position: relative; z-index: 3; 
         }
         .scrollable-content::-webkit-scrollbar { display: none; }
 
         .hud-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
-        
         .hud-title h1 { font-size: 38px; font-weight: 900; letter-spacing: 1px; color: #000; margin-bottom: 6px; }
         .hud-title p { font-size: 12px; color: var(--magic-pink); font-weight: 800; letter-spacing: 4px; }
         
@@ -111,39 +81,18 @@
         .hub-title h2 { font-size: 24px; font-weight: 900; margin-bottom: 8px; color: #000; }
         .hub-title p { font-size: 13px; color: #333; font-weight: 600; }
         
-        .blessing-text {
-            border-top: 1px solid rgba(0,0,0,0.08);
-            padding-top: 20px; font-size: 14px; color: #000; font-weight: 600;
-            line-height: 1.5; display: flex; align-items: flex-start; gap: 8px;
-        }
+        .blessing-text { border-top: 1px solid rgba(0,0,0,0.08); padding-top: 20px; font-size: 14px; color: #000; font-weight: 600; line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
 
-        /* ================= 开关（大） ================= */
         .toggle {
             width: 64px; height: 34px; border-radius: 17px;
-            background: rgba(0,0,0,0.12); 
-            border: 2px solid transparent; 
-            position: relative; transition: 0.3s; 
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);
+            background: rgba(0,0,0,0.12); border: 2px solid transparent; position: relative; transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);
         }
         .toggle::after {
-            content: ''; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px;
-            border-radius: 50%; 
-            background: rgba(255, 255, 255, 0.8); 
-            backdrop-filter: blur(4px);
-            transition: transform 0.5s var(--bounce-easing), box-shadow 0.3s, background 0.3s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 2px rgba(255,255,255,0.8);
+            content: ''; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(4px);
+            transition: transform 0.5s var(--bounce-easing), box-shadow 0.3s, background 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 2px rgba(255,255,255,0.8);
         }
-        .toggle.on { 
-            background: var(--magic-pink-trans); 
-            border: 2px solid rgba(255, 255, 255, 0.95); 
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); 
-        }
-        .toggle.on::after { 
-            transform: translateX(28px); 
-            background: #FFFFFF;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15); 
-            backdrop-filter: none;
-        }
+        .toggle.on { background: var(--magic-pink-trans); border: 2px solid rgba(255, 255, 255, 0.95); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .toggle.on::after { transform: translateX(28px); background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.15); backdrop-filter: none; }
 
         .action-wings { display: flex; gap: 16px; margin-bottom: 24px; }
         .wing-btn { flex: 1; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; cursor: pointer; }
@@ -153,140 +102,63 @@
         .wing-text-row { display: flex; align-items: center; gap: 8px; }
         .wing-text { font-size: 15px; font-weight: 800; color: #000; letter-spacing: 1px; }
         
-        /* ================= 数字角标 ================= */
         .count-badge {
-            font-size: 12px; font-weight: 900; font-family: monospace;
-            padding: 3px 9px; border-radius: 12px;
-            background: var(--magic-pink-trans);
-            color: #FFF; border: 1.5px solid rgba(255, 255, 255, 0.95);
-            box-shadow: 0 2px 6px rgba(255, 75, 139, 0.15);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            font-size: 12px; font-weight: 900; font-family: monospace; padding: 3px 9px; border-radius: 12px;
+            background: var(--magic-pink-trans); color: #FFF; border: 1.5px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 6px rgba(255, 75, 139, 0.15); text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .sub-module { padding: 22px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; cursor: pointer; }
         .sub-module h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; color: #000; }
         .sub-module p { font-size: 12px; color: #333; font-weight: 600; }
         
-        /* ================= 开关（小） ================= */
         .toggle-sm { 
-            width: 48px; height: 26px; border-radius: 13px; 
-            background: rgba(0,0,0,0.12); 
-            border: 2px solid transparent; 
-            position: relative; transition: 0.3s; 
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); 
+            width: 48px; height: 26px; border-radius: 13px; background: rgba(0,0,0,0.12); border: 2px solid transparent; position: relative; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); 
         }
         .toggle-sm::after { 
-            content: ''; position: absolute; top: 1px; left: 1px; width: 20px; height: 20px; 
-            border-radius: 50%; 
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(4px);
-            transition: transform 0.5s var(--bounce-easing), box-shadow 0.3s, background 0.3s; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            content: ''; position: absolute; top: 1px; left: 1px; width: 20px; height: 20px; border-radius: 50%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(4px);
+            transition: transform 0.5s var(--bounce-easing), box-shadow 0.3s, background 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
         }
-        .toggle-sm.on { 
-            background: var(--magic-pink-trans); 
-            border: 2px solid rgba(255, 255, 255, 0.95); 
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); 
-        }
-        .toggle-sm.on::after { 
-            transform: translateX(20px); 
-            background: #FFFFFF;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-            backdrop-filter: none;
-        }
+        .toggle-sm.on { background: var(--magic-pink-trans); border: 2px solid rgba(255, 255, 255, 0.95); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .toggle-sm.on::after { transform: translateX(20px); background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,0.15); backdrop-filter: none; }
 
         .section-title { font-size: 15px; font-weight: 800; color: #000; margin-bottom: 16px; margin-left: 4px; letter-spacing: 1px; }
         .list-container { padding: 8px 20px; }
         .list-item { display: flex; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 15px; font-weight: 700; color: #000; }
         .list-item:last-child { border: none; }
 
-        /* ================= 底部导航栏 ================= */
         .floating-island {
-            position: fixed; 
-            bottom: calc(20px + env(safe-area-inset-bottom)); 
-            left: 50%; 
-            transform: translateX(-50%);
-            width: 88%; 
-            max-width: 420px; 
-            height: 68px; 
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px) saturate(150%);
-            -webkit-backdrop-filter: blur(10px) saturate(150%);
-            border-radius: 34px; 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: center;
-            padding: 0 5px; 
-            z-index: 100; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+            width: 88%; max-width: 420px; height: 68px; background: var(--glass-bg);
+            backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%);
+            border-radius: 34px; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; z-index: 100; box-shadow: 0 8px 20px rgba(0,0,0,0.06);
         }
         .floating-island::before {
             content: ''; position: absolute; inset: 0; border-radius: 34px; pointer-events: none;
-            box-shadow: 
-                inset 0 0 0 1px rgba(0, 0, 0, 0.04),
-                inset 0 0 0 1.5px rgba(255, 255, 255, 0.8),
-                inset 0 6px 12px rgba(255, 255, 255, 0.9),
-                inset 0 -4px 10px rgba(255, 255, 255, 0.4);
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04), inset 0 0 0 1.5px rgba(255, 255, 255, 0.8), inset 0 6px 12px rgba(255, 255, 255, 0.9), inset 0 -4px 10px rgba(255, 255, 255, 0.4);
             z-index: 2;
         }
-
-        .nav-btn { 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            color: #555; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s; 
-            width: 50px; height: 100%;
-            position: relative; z-index: 3;
-        }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s; width: 50px; height: 100%; position: relative; z-index: 3; }
         .nav-btn.active { color: #000; }
         .nav-btn svg { width: 22px; height: 22px; transition: transform 0.4s var(--bounce-easing), color 0.3s; }
         .nav-btn.active svg { transform: translateY(-4px) scale(1.1); color: var(--magic-pink); filter: drop-shadow(0 2px 8px rgba(255,75,139,0.5)); }
         
-        /* ================= 加号按钮 ================= */
         .nav-add-btn {
-            width: 48px; 
-            height: 48px; 
-            border-radius: 50%; 
-            
-            background: linear-gradient(135deg, rgba(255, 154, 158, 0.3) 0%, rgba(255, 75, 139, 0.3) 100%); 
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            
-            box-shadow: 
-                0 4px 12px rgba(255,75,139,0.15), 
-                inset 0 2px 4px rgba(255,255,255,0.6), 
-                inset 0 -2px 4px rgba(0,0,0,0.05);
-                
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            color: #FFF; 
-            font-size: 26px; 
-            font-weight: 300; 
-            cursor: pointer; 
-            transition: transform 0.4s var(--bounce-easing); 
-            
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            
-            z-index: 101;
-            transform: translateY(2px); 
+            width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, rgba(255, 154, 158, 0.3) 0%, rgba(255, 75, 139, 0.3) 100%); 
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(255,75,139,0.15), inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.05);
+            display: flex; align-items: center; justify-content: center; color: #FFF; font-size: 26px; font-weight: 300; cursor: pointer; 
+            transition: transform 0.4s var(--bounce-easing); border: 1px solid rgba(255, 255, 255, 0.5); z-index: 101; transform: translateY(2px); 
         }
-        .nav-add-btn:active { 
-            transform: translateY(2px) scale(0.85) rotate(90deg); 
-        }
+        .nav-add-btn:active { transform: translateY(2px) scale(0.85) rotate(90deg); }
 
-        /* 其他页 */
         .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
         .page-header h1 { font-size: 28px; font-weight: 900; color: #000; }
         
-        /* ================= 胶囊按钮 ================= */
         .btn-text { 
-            font-size: 14px; font-weight: 800; color: #FFF; 
-            background: var(--magic-pink-trans); 
-            padding: 8px 16px; border-radius: 14px; 
-            cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(255,75,139,0.15); 
-            transition: transform 0.3s var(--bounce-easing); 
-            border: 2px solid rgba(255,255,255,0.95);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            font-size: 14px; font-weight: 800; color: #FFF; background: var(--magic-pink-trans); padding: 8px 16px; border-radius: 14px; 
+            cursor: pointer; box-shadow: 0 4px 10px rgba(255,75,139,0.15); transition: transform 0.3s var(--bounce-easing); 
+            border: 2px solid rgba(255,255,255,0.95); text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         .btn-text:active { transform: scale(0.85); }
         
@@ -295,76 +167,66 @@
         .search-box input { border: none; background: transparent; outline: none; font-size: 15px; width: 100%; margin-left: 10px; color: #000; font-weight: 600; }
         .search-box input::placeholder { color: #666; }
         
-        .app-card { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-radius: 20px; background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 4px 10px rgba(0,0,0,0.02), inset 0 1px 4px rgba(255,255,255,0.8); transition: transform 0.4s var(--bounce-easing), background 0.3s; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .app-card { 
+            padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-radius: 20px; 
+            background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 4px 10px rgba(0,0,0,0.02), inset 0 1px 4px rgba(255,255,255,0.8); 
+            transition: transform 0.4s var(--bounce-easing), background 0.3s; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
+        }
         .app-card:active { transform: scale(0.92); }
         .app-card.selected { background: rgba(255, 255, 255, 0.5); border-color: var(--magic-pink); box-shadow: 0 6px 15px rgba(255,75,139,0.15), inset 0 2px 5px rgba(255,255,255,1); }
         .app-title { font-size: 15px; font-weight: 800; color: #000; }
         .app-pkg { font-size: 12px; color: #444; font-family: monospace; margin-top: 4px; font-weight: 600; }
         
-        /* ================= 打勾圆圈 ================= */
         .app-check { 
-            width: 26px; height: 26px; border-radius: 50%; 
-            border: 2px solid rgba(0,0,0,0.15); 
+            width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.15); 
             display: flex; align-items: center; justify-content: center; 
             transition: transform 0.4s var(--bounce-easing), background 0.3s, border-color 0.3s; 
-            background: rgba(255,255,255,0.8); 
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); 
+            background: rgba(255,255,255,0.8); box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); flex-shrink: 0;
         }
         .app-card.selected .app-check { 
-            background: var(--magic-pink-trans); 
-            border-color: rgba(255, 255, 255, 0.95); 
-            border-width: 2px;
-            box-shadow: 0 3px 8px rgba(255,75,139,0.2);
-            transform: scale(1.15); 
+            background: var(--magic-pink-trans); border-color: rgba(255, 255, 255, 0.95); border-width: 2px;
+            box-shadow: 0 3px 8px rgba(255,75,139,0.2); animation: jellyCheck 0.5s var(--bounce-easing) forwards;
         }
+        @keyframes jellyCheck { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1.15); } }
         .app-check svg { display: none; width: 14px; height: 14px; color: #FFF; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2)); }
-        .app-card.selected .app-check svg { display: block; }
+        .app-card.selected .app-check svg { display: block; animation: popIn 0.45s var(--bounce-easing) forwards; }
+        @keyframes popIn { 0% { transform: scale(0) rotate(-45deg); opacity: 0; } 60% { transform: scale(1.3) rotate(10deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
 
-        /* 弹窗系统 */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; 
+        }
         .modal.active { opacity: 1; pointer-events: auto; }
         .modal-content { 
-            width: 85%; max-width: 320px; 
-            background: var(--glass-bg); 
-            backdrop-filter: blur(12px) saturate(150%); -webkit-backdrop-filter: blur(12px) saturate(150%);
-            padding: 28px; border-radius: 24px; position: relative;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            transform: scale(0.7) translateY(50px); transition: transform 0.5s var(--bounce-easing); 
+            width: 85%; max-width: 320px; background: rgba(255, 255, 255, 0.45); 
+            backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%);
+            padding: 28px; border-radius: 24px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            transform: scale(0.7) translateY(50px); transition: transform 0.5s var(--bounce-easing); overflow: hidden;
         }
         .modal-content::before {
             content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none;
-            box-shadow: 
-                inset 0 0 0 1px rgba(0, 0, 0, 0.04),
-                inset 0 0 0 1.5px rgba(255, 255, 255, 0.8),
-                inset 0 6px 12px rgba(255, 255, 255, 0.9),
-                inset 0 -4px 10px rgba(255, 255, 255, 0.4);
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04), inset 0 0 0 1.5px rgba(255, 255, 255, 0.8), inset 0 6px 12px rgba(255, 255, 255, 0.9), inset 0 -4px 10px rgba(255, 255, 255, 0.4);
             z-index: 1;
         }
         .modal.active .modal-content { transform: scale(1) translateY(0); }
         .modal-content h3 { color: #000; position: relative; z-index: 2; }
-        .modal-input { width: 100%; padding: 16px; margin-bottom: 14px; border-radius: 14px; background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.6); color: #000; outline: none; font-size: 15px; transition: border 0.3s; font-weight: 600; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); position: relative; z-index: 2; }
-        .modal-input:focus { border-color: var(--magic-pink); background: rgba(255,255,255,0.8); box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
+        .modal-input { width: 100%; padding: 16px; margin-bottom: 14px; border-radius: 14px; background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.6); color: #000; outline: none; font-size: 15px; transition: border 0.3s; font-weight: 600; box-shadow: inset 0 2px 5px rgba(0,0,0,0.03); position: relative; z-index: 2; }
+        .modal-input:focus { border-color: var(--magic-pink); background: rgba(255,255,255,0.6); box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
+        
         .modal-btns { display: flex; gap: 12px; margin-top: 16px; position: relative; z-index: 2; }
         .modal-btn { flex: 1; padding: 16px; border-radius: 14px; border: none; font-size: 15px; font-weight: 800; cursor: pointer; transition: transform 0.3s var(--bounce-easing); }
         .modal-btn:active { transform: scale(0.85); }
-        .btn-cancel { background: rgba(255,255,255,0.5); color: #000; border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 2px 4px rgba(255,255,255,0.8); }
-        .btn-ok { 
-            background: var(--magic-pink-trans); color: #fff; 
-            border: 2px solid rgba(255,255,255,0.95);
-            box-shadow: 0 4px 15px rgba(255,75,139,0.2); 
-        }
+        .btn-cancel { background: rgba(255,255,255,0.5); color: #000; border: 1px solid rgba(255,255,255,0.8); box-shadow: inset 0 2px 4px rgba(255,255,255,0.8); }
+        .btn-ok { background: var(--magic-pink-trans); color: #fff; border: 2px solid rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(255,75,139,0.2), inset 0 2px 4px rgba(255,255,255,0.4); }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- 首页 -->
         <div id="page-home" class="page active">
             <div class="scrollable-content">
                 <div class="hud-header">
-                    <div class="hud-title">
-                        <h1>WeaiText</h1>
-                        <p>CUTE MAGIC</p>
-                    </div>
+                    <div class="hud-title"><h1>WeaiText</h1><p>CUTE MAGIC</p></div>
                 </div>
                 <div class="liquid-glass core-hub" onclick="toggleMainSwitch()">
                     <div class="hub-top">
@@ -374,38 +236,27 @@
                         </div>
                         <div class="toggle on" id="mainToggle"></div>
                     </div>
-                    <div class="blessing-text">
-                        <span>✨</span> 全知全能的本喵已就位，祝您今天一切顺利！
-                    </div>
+                    <div class="blessing-text"><span>✨</span> 全知全能的本喵已就位，祝您今天一切顺利！</div>
                 </div>
                 <div class="action-wings">
                     <div class="liquid-glass wing-btn" onclick="switchPage('config', 1)">
                         <div class="wing-icon">🪄</div>
-                        <div class="wing-text-row">
-                            <span class="wing-text">管理规则</span>
-                            <span class="count-badge" id="ruleCount">0</span>
-                        </div>
+                        <div class="wing-text-row"><span class="wing-text">管理规则</span><span class="count-badge" id="ruleCount">0</span></div>
                     </div>
                     <div class="liquid-glass wing-btn" onclick="switchPage('app-select', 2)">
                         <div class="wing-icon">🔮</div>
-                        <div class="wing-text-row">
-                            <span class="wing-text">选择领地</span>
-                            <span class="count-badge" id="appCount">0</span>
-                        </div>
+                        <div class="wing-text-row"><span class="wing-text">选择领地</span><span class="count-badge" id="appCount">0</span></div>
                     </div>
                 </div>
                 <div class="liquid-glass sub-module" onclick="toggleBackgroundMode()">
-                    <div>
-                        <h3>无痕模式</h3>
-                        <p>退出即隐身，不占用多任务</p>
-                    </div>
+                    <div><h3>无痕模式</h3><p>退出即隐身，不占用多任务</p></div>
                     <div class="toggle-sm" id="bgToggle"></div>
                 </div>
                 <div class="section-title">最近施展</div>
                 <div class="liquid-glass list-container" id="recentRules"></div>
             </div>
         </div>
-        <!-- 配置页 -->
+        
         <div id="page-config" class="page">
             <div class="scrollable-content">
                 <div class="page-header">
@@ -413,10 +264,7 @@
                     <div class="btn-text" onclick="clearRules()">清空全部</div>
                 </div>
                 <div class="liquid-glass sub-module" style="margin-bottom: 24px;">
-                    <div>
-                        <h3 id="appendMagicName">自定义后缀</h3>
-                        <p id="appendMagicDesc">在末尾自动追加字符</p>
-                    </div>
+                    <div><h3 id="appendMagicName">自定义后缀</h3><p id="appendMagicDesc">在末尾自动追加字符</p></div>
                     <div class="toggle-sm" id="appendToggle" onclick="toggleAppendMagic()"></div>
                 </div>
                 <div class="liquid-glass list-container" id="appendInputWrap" style="margin-bottom: 24px; padding: 20px;">
@@ -427,7 +275,7 @@
                 <div class="liquid-glass list-container" id="configRuleList"></div>
             </div>
         </div>
-        <!-- 工具页 -->
+        
         <div id="page-apps" class="page">
             <div class="scrollable-content">
                 <div class="page-header"><h1>系统工具</h1></div>
@@ -437,25 +285,21 @@
                         <div class="btn-text" style="font-size:13px; padding: 6px 12px;" id="toolSelectedCount">已选 0 个</div>
                     </div>
                     <div class="liquid-glass sub-module" style="margin:0;" onclick="openBatterySettings()">
-                        <div><h3>🔋 电池优化</h3><p>加入白名单，防止被系统杀后台</p></div>
-                        <div style="color:#555; font-size:20px; font-weight:bold;">›</div>
+                        <div><h3>🔋 电池优化</h3><p>加入白名单，防止被系统杀后台</p></div><div style="color:#555; font-size:20px; font-weight:bold;">›</div>
                     </div>
                     <div class="liquid-glass sub-module" style="margin:0;" onclick="openAutoStartSettings()">
-                        <div><h3>🚀 自启动权限</h3><p>允许应用在后台自启动</p></div>
-                        <div style="color:#555; font-size:20px; font-weight:bold;">›</div>
+                        <div><h3>🚀 自启动权限</h3><p>允许应用在后台自启动</p></div><div style="color:#555; font-size:20px; font-weight:bold;">›</div>
                     </div>
                     <div class="liquid-glass sub-module" style="margin:0;" onclick="openAccessibilitySettings()">
-                        <div><h3>🧑‍🦽 无障碍服务</h3><p>重启手机后需重新开启</p></div>
-                        <div style="color:#555; font-size:20px; font-weight:bold;">›</div>
+                        <div><h3>🧑‍🦽 无障碍服务</h3><p>重启手机后需重新开启</p></div><div style="color:#555; font-size:20px; font-weight:bold;">›</div>
                     </div>
                     <div class="liquid-glass sub-module" style="margin:0;" onclick="openNotificationSettings()">
-                        <div><h3>🔔 通知权限</h3><p>确保前台服务保活稳定</p></div>
-                        <div style="color:#555; font-size:20px; font-weight:bold;">›</div>
+                        <div><h3>🔔 通知权限</h3><p>确保前台服务保活稳定</p></div><div style="color:#555; font-size:20px; font-weight:bold;">›</div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- 应用选择页 -->
+
         <div id="page-app-select" class="page">
             <div class="scrollable-content">
                 <div class="page-header" style="align-items: center;">
@@ -472,13 +316,10 @@
                 <div id="appList"></div>
             </div>
         </div>
-        <!-- 关于页 -->
+
         <div id="page-about" class="page">
             <div class="scrollable-content">
-                <div class="page-header">
-                    <h1>关于 WeaiText</h1>
-                </div>
-
+                <div class="page-header"><h1>关于 WeaiText</h1></div>
                 <div class="liquid-glass core-hub" style="text-align:center; padding:32px 24px; margin-bottom:24px;">
                     <div style="width:90px;height:90px;margin:0 auto 16px;border-radius:50%;border:2px solid rgba(255,255,255,0.8);box-shadow:0 4px 15px rgba(255,75,139,0.3), inset 0 2px 5px rgba(255,255,255,0.8);overflow:hidden;background:#F0F0F0;display:flex;align-items:center;justify-content:center;font-size:36px; position:relative; z-index:3;">
                         <img src="avatar.png" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'; this.parentNode.innerHTML='✨';">
@@ -490,18 +331,9 @@
 
                 <div class="section-title">应用信息</div>
                 <div class="liquid-glass list-container">
-                    <div class="list-item">
-                        <span>版本号</span>
-                        <span style="color:#333;">v1.0.0</span>
-                    </div>
-                    <div class="list-item">
-                        <span>开发者</span>
-                        <span style="color:#333;">Asia.C</span>
-                    </div>
-                    <div class="list-item">
-                        <span>构建时间</span>
-                        <span style="color:#333;">2026‑10‑17</span>
-                    </div>
+                    <div class="list-item"><span>版本号</span><span style="color:#333;">v1.0.0</span></div>
+                    <div class="list-item"><span>开发者</span><span style="color:#333;">Asia.C</span></div>
+                    <div class="list-item"><span>构建时间</span><span style="color:#333;">2026‑10‑17</span></div>
                 </div>
 
                 <div class="section-title">功能说明</div>
@@ -515,27 +347,13 @@
                 <div class="section-title">其他</div>
                 
                 <div class="liquid-glass sub-module" style="cursor:pointer;" onclick="openFeedbackModal()">
-                    <div>
-                        <h3>反馈与建议</h3>
-                        <p>遇到bug或者想要新功能欢迎反馈</p>
-                    </div>
-                    <div style="color:var(--magic-pink);font-size:20px; font-weight:bold;">›</div>
+                    <div><h3>反馈与建议</h3><p>遇到bug或者想要新功能欢迎反馈</p></div><div style="color:var(--magic-pink);font-size:20px; font-weight:bold;">›</div>
                 </div>
-                
                 <div class="liquid-glass sub-module" style="cursor:pointer;" onclick="openLicenseModal()">
-                    <div>
-                        <h3>开源许可</h3>
-                        <p>查看开源协议</p>
-                    </div>
-                    <div style="color:#555;font-size:20px; font-weight:bold;">›</div>
+                    <div><h3>开源许可</h3><p>查看开源协议</p></div><div style="color:#555;font-size:20px; font-weight:bold;">›</div>
                 </div>
-                
-                <div class="liquid-glass sub-module" style="cursor:pointer;" onclick="showToast('喵~ 感谢你的支持！')">
-                    <div>
-                        <h3>致谢</h3>
-                        <p>感谢使用本喵的魔法工具 🐾</p>
-                    </div>
-                    <div style="color:#555;font-size:20px; font-weight:bold;">›</div>
+                <div class="liquid-glass sub-module" style="cursor:pointer;" onclick="openThanksModal()">
+                    <div><h3>致谢</h3><p>感谢使用本喵的魔法工具 🐾</p></div><div style="color:#555;font-size:20px; font-weight:bold;">›</div>
                 </div>
 
                 <div style="text-align:center;margin-top:30px;margin-bottom:40px;color:#333;font-size:12px;line-height:1.6; font-weight:600;">
@@ -545,7 +363,6 @@
             </div>
         </div>
         
-        <!-- 底部灵动岛 -->
         <div class="floating-island">
             <div class="nav-btn active" id="nav-home" onclick="switchPage('home', 0)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -554,7 +371,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
             </div>
             
-            <!-- 核心加号（下移，极透） -->
             <div class="nav-add-btn" onclick="openModal()">＋</div>
             
             <div class="nav-btn" id="nav-apps" onclick="switchPage('apps', 2)">
@@ -565,7 +381,6 @@
             </div>
         </div>
         
-        <!-- 新增规则弹窗 -->
         <div class="modal" id="addModal">
             <div class="modal-content">
                 <h3 style="text-align:center; margin-bottom:20px; font-size:20px; font-weight:900;">新增规则</h3>
@@ -578,30 +393,26 @@
             </div>
         </div>
 
-        <!-- 反馈弹窗 -->
         <div class="modal" id="feedbackModal">
             <div class="modal-content">
                 <h3 style="text-align:center; margin-bottom:16px; font-size:20px; font-weight:900;">反馈与建议</h3>
-                <p style="color:#333; font-size:14px; line-height:1.6; text-align:center; margin-bottom:12px; font-weight:600;">
+                <p style="color:#333; font-size:14px; line-height:1.6; text-align:center; margin-bottom:12px; font-weight:600; position:relative; z-index:2;">
                     如果在使用中遇到 Bug，或者想要新的魔法功能，欢迎联系本喵：
                 </p>
-                
-                <div style="display:flex; justify-content:center; align-items:center; background:rgba(255,255,255,0.4); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.8); box-shadow: inset 0 2px 4px rgba(255,255,255,1); position:relative; z-index:2;">
-                    <b id="feedbackEmailText" style="color:var(--magic-pink); font-size:16px; font-family:monospace;">3525643975@qq.com</b>
-                    <button onclick="copyEmail()" style="margin-left:12px; background:var(--magic-pink); border:none; color:#FFF; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(255,75,139,0.4), inset 0 1px 3px rgba(255,255,255,0.5); transition: transform 0.3s var(--bounce-easing);">一键复制</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.3); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.6); box-shadow: inset 0 2px 4px rgba(255,255,255,0.8); position:relative; z-index:2; gap: 8px;">
+                    <b id="feedbackEmailText" style="color:var(--magic-pink); font-size:14px; font-family:monospace; word-break: break-all; flex:1;">3525643975@qq.com</b>
+                    <button onclick="copyEmail()" style="white-space:nowrap; background:var(--magic-pink); border:none; color:#FFF; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(255,75,139,0.4), inset 0 1px 3px rgba(255,255,255,0.5); transition: transform 0.3s var(--bounce-easing); flex-shrink: 0;">一键复制</button>
                 </div>
-
                 <div class="modal-btns" style="margin-top:20px;">
                     <button class="modal-btn btn-ok" onclick="closeModal('feedbackModal')">我知道了</button>
                 </div>
             </div>
         </div>
 
-        <!-- 开源许可弹窗 -->
         <div class="modal" id="licenseModal">
             <div class="modal-content">
                 <h3 style="text-align:center; margin-bottom:12px; font-size:20px; font-weight:900;">开源许可</h3>
-                <div style="background:rgba(255,255,255,0.3); padding:12px; border-radius:12px; font-size:12px; color:#333; height:180px; overflow-y:auto; line-height:1.5; text-align:left; white-space: pre-wrap; font-weight:600; border:1px solid rgba(255,255,255,0.6); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); position:relative; z-index:2;">
+                <div style="background:rgba(255,255,255,0.2); padding:12px; border-radius:12px; font-size:12px; color:#333; height:180px; overflow-y:auto; line-height:1.5; text-align:left; white-space: pre-wrap; font-weight:600; border:1px solid rgba(255,255,255,0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); position:relative; z-index:2;">
 MIT License
 
 Copyright (c) 2026 Asia.C
@@ -629,92 +440,70 @@ SOFTWARE.</div>
             </div>
         </div>
 
+        <div class="modal" id="thanksModal">
+            <div class="modal-content">
+                <h3 style="text-align:center; margin-bottom:16px; font-size:20px; font-weight:900;">致谢</h3>
+                <p style="color:#333; font-size:14px; line-height:1.8; text-align:center; font-weight:600; position:relative; z-index:2;">
+                    感谢所有开源作者的辛勤付出！<br>
+                    也感谢一直支持本喵的你 🐾<br>
+                    <span style="color:var(--magic-pink); font-weight:800; margin-top:12px; display:inline-block; font-size: 16px;">WeaiText · Cute Magic</span>
+                </p>
+                <div class="modal-btns">
+                    <button class="modal-btn btn-ok" onclick="closeModal('thanksModal')">关闭</button>
+                </div>
+            </div>
+        </div>
     </div>
+    
     <script>
-        // ================= 魔法触摸光点 =================
         document.addEventListener('pointerdown', function(e) {
             const wave = document.createElement('div');
             wave.className = 'click-wave';
-            wave.style.left = e.clientX + 'px';
-            wave.style.top = e.clientY + 'px';
-            wave.style.width = '18px';
-            wave.style.height = '18px';
+            wave.style.left = e.clientX + 'px'; wave.style.top = e.clientY + 'px';
+            wave.style.width = '18px'; wave.style.height = '18px';
             document.body.appendChild(wave);
             setTimeout(() => { if (wave.parentNode) wave.parentNode.removeChild(wave); }, 400);
         });
 
         function showToast(msg) {
-            if (window.AndroidBridge && window.AndroidBridge.toast) {
-                window.AndroidBridge.toast(msg);
-            } else {
-                alert(msg);
-            }
+            if (window.Android && window.Android.showToast) { window.Android.showToast(msg); } else { alert(msg); }
         }
 
-        // ================= 一键复制功能 =================
         function copyEmail() {
             const email = document.getElementById('feedbackEmailText').innerText;
-            
             if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(email).then(() => {
-                    showToast('邮箱已复制到剪贴板喵~');
-                }).catch(() => {
-                    fallbackCopy(email);
-                });
-            } else {
-                fallbackCopy(email);
-            }
+                navigator.clipboard.writeText(email).then(() => showToast('邮箱已复制到剪贴板喵~')).catch(() => fallbackCopy(email));
+            } else { fallbackCopy(email); }
         }
-
         function fallbackCopy(text) {
             const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.position = "fixed";
-            textArea.style.top = "-9999px";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
+            textArea.value = text; textArea.style.position = "fixed"; textArea.style.top = "-9999px";
+            document.body.appendChild(textArea); textArea.focus(); textArea.select();
             try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    showToast('邮箱已复制到剪贴板喵~');
-                } else {
-                    showToast('复制失败，请手动长按复制');
-                }
-            } catch (err) {
-                showToast('复制失败，请手动长按复制');
-            }
+                if (document.execCommand('copy')) showToast('邮箱已复制到剪贴板喵~');
+                else showToast('复制失败，请手动长按复制');
+            } catch (err) { showToast('复制失败，请手动长按复制'); }
             document.body.removeChild(textArea);
         }
 
-        // ================= 弹窗控制 =================
         function openModal() { document.getElementById('addModal').classList.add('active'); }
         function openFeedbackModal() { document.getElementById('feedbackModal').classList.add('active'); }
         function openLicenseModal() { document.getElementById('licenseModal').classList.add('active'); }
-        
+        function openThanksModal() { document.getElementById('thanksModal').classList.add('active'); }
         function closeModal(id) { 
             document.getElementById(id).classList.remove('active'); 
-            if (id === 'addModal') {
-                document.getElementById('inputFrom').value = ''; 
-                document.getElementById('inputTo').value = ''; 
-            }
+            if (id === 'addModal') { document.getElementById('inputFrom').value = ''; document.getElementById('inputTo').value = ''; }
         }
 
-        // ================= 核心逻辑 =================
-        let rules = [];
-        let apps = [];
-        let isModuleActive = true;
-        let isBackgroundMode = false;
+        let rules = [], apps = [], isModuleActive = true, isBackgroundMode = false;
         let appendMagic = { enabled: false, suffix: '喵' };
-
         let currentIndex = 0;
         const navItems = document.querySelectorAll('.nav-btn');
-        const pageIds = ['home', 'config', 'apps', 'about'];
 
         function initAppData() {
-            if (window.AndroidBridge && window.AndroidBridge.getInstalledApps) {
+            if (window.Android && window.Android.getInstalledApps) {
                 try {
-                    const nativeAppsStr = window.AndroidBridge.getInstalledApps();
+                    const nativeAppsStr = window.Android.getInstalledApps();
                     if (nativeAppsStr && nativeAppsStr !== "[]") {
                         const nativeApps = JSON.parse(nativeAppsStr);
                         apps = nativeApps.map(app => ({ name: app.name, pkg: app.pkg, selected: false }));
@@ -723,21 +512,16 @@ SOFTWARE.</div>
                 } catch (e) { console.error("获取应用列表失败", e); }
             }
             if (apps.length === 0) { apps = [{ name: '微信', pkg: 'com.tencent.mm', selected: true }]; }
-
-            const hasConfig = loadConfig();
-            if (!hasConfig) { rules = [{ from: '我', to: '本喵' }]; saveConfig(); }
-            renderAll();
-            updateAppendUI();
+            if (!loadConfig()) { rules = [{ from: '我', to: '本喵' }]; saveConfig(); }
+            renderAll(); updateAppendUI();
         }
 
         function switchPage(pageId, navIndex) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
-            
             navItems.forEach(item => item.classList.remove('active'));
             const targetNav = document.getElementById('nav-' + (pageId === 'app-select' ? 'apps' : pageId));
             if(targetNav) targetNav.classList.add('active');
-
             currentIndex = navIndex;
             if (pageId === 'config') {
                 renderConfigRules();
@@ -751,24 +535,18 @@ SOFTWARE.</div>
         function toggleBackgroundMode() {
             isBackgroundMode = !isBackgroundMode;
             document.getElementById('bgToggle').classList.toggle('on', isBackgroundMode);
-            if (window.AndroidBridge && window.AndroidBridge.setBackgroundMode) {
-                window.AndroidBridge.setBackgroundMode(isBackgroundMode);
-            }
-            saveConfig();
-            showToast(isBackgroundMode ? "无痕模式已开启" : "无痕模式已关闭");
+            if (window.Android && window.Android.setBackgroundMode) window.Android.setBackgroundMode(isBackgroundMode);
+            saveConfig(); showToast(isBackgroundMode ? "无痕模式已开启" : "无痕模式已关闭");
         }
 
         function toggleAppendMagic() {
             appendMagic.enabled = !appendMagic.enabled;
             document.getElementById('appendToggle').classList.toggle('on', appendMagic.enabled);
-            updateAppendUI();
-            saveConfig();
+            updateAppendUI(); saveConfig();
         }
 
         function updateAppendSuffix(val) {
-            appendMagic.suffix = val || '喵';
-            updateAppendUI();
-            saveConfig();
+            appendMagic.suffix = val || '喵'; updateAppendUI(); saveConfig();
         }
 
         function updateAppendUI() {
@@ -786,30 +564,23 @@ SOFTWARE.</div>
             }
         }
 
-        function buildConfig() {
-            return { enabled: isModuleActive, bgMode: isBackgroundMode, targets: apps.filter(a => a.selected).map(a => a.pkg), rules: rules, appendMagic: appendMagic };
-        }
-
+        function buildConfig() { return { enabled: isModuleActive, bgMode: isBackgroundMode, targets: apps.filter(a => a.selected).map(a => a.pkg), rules: rules, appendMagic: appendMagic }; }
+        
         function saveConfig() {
             const cfg = JSON.stringify(buildConfig(), null, 2);
             try { localStorage.setItem('weaitext_cfg', cfg); } catch(e) {}
-            if (window.AndroidBridge && window.AndroidBridge.saveConfig) { window.AndroidBridge.saveConfig(cfg); }
+            if (window.Android && window.Android.saveConfig) { window.Android.saveConfig(cfg); }
         }
-
+        
         function loadConfig() {
             let raw = '';
-            if (window.AndroidBridge && window.AndroidBridge.loadConfig) {
-                try { raw = window.AndroidBridge.loadConfig(); } catch(e) {}
-            }
+            if (window.Android && window.Android.loadConfig) { try { raw = window.Android.loadConfig(); } catch(e) {} }
             if (!raw) { try { raw = localStorage.getItem('weaitext_cfg') || ''; } catch(e) {} }
             if (!raw) return false; 
             try {
                 const cfg = JSON.parse(raw);
                 if (typeof cfg.enabled === 'boolean') isModuleActive = cfg.enabled;
-                if (typeof cfg.bgMode === 'boolean') { 
-                    isBackgroundMode = cfg.bgMode; 
-                    document.getElementById('bgToggle').classList.toggle('on', isBackgroundMode); 
-                }
+                if (typeof cfg.bgMode === 'boolean') { isBackgroundMode = cfg.bgMode; document.getElementById('bgToggle').classList.toggle('on', isBackgroundMode); }
                 if (Array.isArray(cfg.targets)) {
                     apps.forEach(app => app.selected = false);
                     cfg.targets.forEach(pkg => { const app = apps.find(a => a.pkg === pkg); if (app) app.selected = true; });
@@ -820,15 +591,26 @@ SOFTWARE.</div>
                 document.getElementById('mainToggle').classList.toggle('on', isModuleActive);
                 document.getElementById('statusTitle').innerHTML = isModuleActive ? '喵喵出击！ 🐾' : '本喵睡着了 Zzz...';
                 document.getElementById('statusDesc').innerText = isModuleActive ? '魔法引擎运转中' : '魔法暂停施展';
-                
                 return true; 
             } catch(e) { return false; }
         }
 
-        function openBatterySettings() { if (window.AndroidBridge && window.AndroidBridge.openBatterySettings) window.AndroidBridge.openBatterySettings(); else showToast("请在系统设置中允许后台运行"); }
-        function openAccessibilitySettings() { if (window.AndroidBridge && window.AndroidBridge.openAccessibilitySettings) window.AndroidBridge.openAccessibilitySettings(); else showToast("请手动开启无障碍服务"); }
-        function openAutoStartSettings() { if (window.AndroidBridge && window.AndroidBridge.openAutoStartSettings) window.AndroidBridge.openAutoStartSettings(); else showToast("请手动允许自启动"); }
-        function openNotificationSettings() { if (window.AndroidBridge && window.AndroidBridge.openNotificationSettings) window.AndroidBridge.openNotificationSettings(); else showToast("请手动允许通知权限"); }
+        function openBatterySettings() { 
+            if (window.Android && window.Android.openBatterySettings) window.Android.openBatterySettings(); 
+            else showToast("请在系统设置中允许后台运行"); 
+        }
+        function openAccessibilitySettings() { 
+            if (window.Android && window.Android.openAccessibilitySettings) window.Android.openAccessibilitySettings(); 
+            else showToast("请手动开启无障碍服务"); 
+        }
+        function openAutoStartSettings() { 
+            if (window.Android && window.Android.openAutoStartSettings) window.Android.openAutoStartSettings(); 
+            else showToast("请手动允许自启动"); 
+        }
+        function openNotificationSettings() { 
+            if (window.Android && window.Android.openNotificationSettings) window.Android.openNotificationSettings(); 
+            else showToast("请手动允许通知权限"); 
+        }
 
         function renderRecentRules() {
             const container = document.getElementById('recentRules');
@@ -856,8 +638,9 @@ SOFTWARE.</div>
                 if (filterText && !app.name.toLowerCase().includes(filterText.toLowerCase()) && !app.pkg.toLowerCase().includes(filterText.toLowerCase())) return '';
                 if (app.selected) selectedCount++;
                 const originalIndex = apps.findIndex(a => a.pkg === app.pkg);
+                
                 return `
-                    <div class="app-card ${app.selected ? 'selected' : ''}" onclick="toggleApp(${originalIndex})">
+                    <div class="app-card ${app.selected ? 'selected' : ''}" onclick="toggleApp(${originalIndex}, this)">
                         <div>
                             <div class="app-title">${app.name}</div>
                             <div class="app-pkg">${app.pkg}</div>
@@ -872,7 +655,19 @@ SOFTWARE.</div>
             document.getElementById('appsStatus').innerText = `已选 ${selectedCount} 个`;
         }
 
-        function toggleApp(index) { apps[index].selected = !apps[index].selected; saveConfig(); renderApps(document.getElementById('appSearch').value); }
+        function toggleApp(index, element) { 
+            apps[index].selected = !apps[index].selected; 
+            if (apps[index].selected) { element.classList.add('selected'); } 
+            else { element.classList.remove('selected'); }
+
+            let selectedCount = apps.filter(a => a.selected).length;
+            document.getElementById('appCount').innerText = selectedCount;
+            document.getElementById('toolSelectedCount').innerText = `已选 ${selectedCount} 个`;
+            document.getElementById('appsStatus').innerText = `已选 ${selectedCount} 个`;
+
+            saveConfig(); 
+        }
+
         function filterApps() { renderApps(document.getElementById('appSearch').value); }
         function deleteRule(index) { rules.splice(index, 1); renderAll(); saveConfig(); }
         function clearRules() { if (rules.length === 0) return; if (confirm('确定清空所有规则吗？')) { rules = []; renderAll(); saveConfig(); showToast('所有规则已清空'); } }
@@ -887,22 +682,13 @@ SOFTWARE.</div>
         
         function addRule() {
             const from = document.getElementById('inputFrom').value.trim(), to = document.getElementById('inputTo').value.trim();
-            if (from && to) { 
-                rules.push({ from, to }); 
-                renderAll(); 
-                closeModal('addModal'); 
-                saveConfig(); 
-                showToast('规则添加成功');
-            } else { 
-                showToast('请填写完整的魔法词条喵~'); 
-            }
+            if (from && to) { rules.push({ from, to }); renderAll(); closeModal('addModal'); saveConfig(); showToast('规则添加成功'); } 
+            else { showToast('请填写完整的魔法词条喵~'); }
         }
 
         function renderAll() {
             document.getElementById('ruleCount').innerText = rules.length;
-            renderRecentRules();
-            renderConfigRules();
-            renderApps(document.getElementById('appSearch').value);
+            renderRecentRules(); renderConfigRules(); renderApps(document.getElementById('appSearch').value);
         }
 
         initAppData();
