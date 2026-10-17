@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.webkit.JavascriptInterface
@@ -199,6 +200,21 @@ class LauncherActivity : AppCompatActivity() {
                 val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
                 startActivity(intent)
+            }
+        }
+
+        // 🌟 新增：接收“隐藏后台通知”开关
+        @JavascriptInterface
+        fun setBackgroundMode(enabled: Boolean) {
+            // 存入 SharedPreferences
+            darkPrefs().edit().putBoolean("bg_mode_hide", enabled).apply()
+            
+            // 重启后台服务，触发 LifelineService 重新读取配置
+            val intent = Intent(this@LauncherActivity, LifelineService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
             }
         }
 
