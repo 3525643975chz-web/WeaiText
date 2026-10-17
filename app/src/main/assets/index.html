@@ -157,7 +157,6 @@
             cursor: pointer; 
             margin-bottom: 18px; 
             border-radius: 22px; 
-            /* 移除了原来的入场动画，防止点击时闪烁 */
             transition: transform 0.2s ease, background 0.2s ease; 
         }
         .app-item:active {
@@ -614,16 +613,11 @@
     </div> 
 
     <script>
+        // ================= 数据状态 =================
         let rules = [{ from: '我', to: '本喵' }, { from: '你', to: '杂鱼' }, { from: '他', to: '喵桑' }, { from: '她', to: '喵酱' }, { from: '宝宝', to: '蠢鱼' }];
-        let apps = [
-            { name: '微信', pkg: 'com.tencent.mm', selected: true },
-            { name: 'QQ', pkg: 'com.tencent.mobileqq', selected: true },
-            { name: '抖音', pkg: 'com.ss.android.ugc.aweme', selected: true },
-            { name: '哔哩哔哩', pkg: 'tv.danmaku.bili', selected: true },
-            { name: '支付宝', pkg: 'com.eg.android.AlipayGphone', selected: false },
-            { name: '淘宝', pkg: 'com.taobao.taobao', selected: false },
-            { name: '小红书', pkg: 'com.xingin.xhs', selected: false }
-        ];
+        
+        // 初始为空，等待从手机读取
+        let apps = [];
         let isModuleActive = true;
         let appendMagic = { enabled: false, suffix: '喵' };
 
@@ -632,6 +626,53 @@
         const bottomNav = document.getElementById('bottomNav');
         const pageIds = ['home', 'config', 'apps', 'about'];
 
+        // ================= 初始化核心逻辑 =================
+        function initAppData() {
+            // 1. 尝试从 Android 原生获取真实安装的应用
+            if (window.AndroidBridge && window.AndroidBridge.getInstalledApps) {
+                try {
+                    const nativeAppsStr = window.AndroidBridge.getInstalledApps();
+                    const nativeApps = JSON.parse(nativeAppsStr);
+                    
+                    apps = nativeApps.map(app => ({
+                        name: app.name,
+                        pkg: app.pkg,
+                        selected: false 
+                    }));
+                    
+                    // 按应用名称排序
+                    apps.sort((a, b) => a.name.localeCompare(b.name));
+                } catch (e) {
+                    console.error("获取应用列表失败", e);
+                    useMockApps();
+                }
+            } else {
+                // 浏览器预览环境
+                useMockApps();
+            }
+
+            // 2. 读取本地保存的配置（恢复之前选中的应用）
+            loadConfig();
+            
+            // 3. 刷新全量 UI
+            renderAll();
+            updateAppendUI();
+        }
+
+        // 假数据备用（仅在电脑浏览器预览时生效）
+        function useMockApps() {
+            apps = [
+                { name: '微信', pkg: 'com.tencent.mm', selected: true },
+                { name: 'QQ', pkg: 'com.tencent.mobileqq', selected: true },
+                { name: '抖音', pkg: 'com.ss.android.ugc.aweme', selected: true },
+                { name: '哔哩哔哩', pkg: 'tv.danmaku.bili', selected: true },
+                { name: '支付宝', pkg: 'com.eg.android.AlipayGphone', selected: false },
+                { name: '淘宝', pkg: 'com.taobao.taobao', selected: false },
+                { name: '小红书', pkg: 'com.xingin.xhs', selected: false }
+            ];
+        }
+
+        // ================= 页面切换 =================
         function switchPage(pageId, navIndex) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const targetPage = document.getElementById('page-' + pageId);
@@ -654,6 +695,7 @@
             }
         }
 
+        // ================= 后缀魔法逻辑 =================
         function toggleAppendMagic() {
             appendMagic.enabled = !appendMagic.enabled;
             document.getElementById('appendToggle').classList.toggle('on', appendMagic.enabled);
@@ -684,6 +726,7 @@
             }
         }
 
+        // ================= 配置保存与读取 =================
         function buildConfig() {
             return { 
                 enabled: isModuleActive, 
@@ -702,10 +745,12 @@
         }
 
         function loadConfig() {
+            // 优先从原生读取（目前原生未实现，返回空），再兜底 localStorage
             let raw = '';
             if (window.AndroidBridge && window.AndroidBridge.loadConfig) {
                 raw = window.AndroidBridge.loadConfig();
-            } else {
+            }
+            if (!raw) {
                 try { raw = localStorage.getItem('weaitext_cfg') || ''; } catch(e) {}
             }
             
@@ -713,17 +758,22 @@
             try {
                 const cfg = JSON.parse(raw);
                 if (typeof cfg.enabled === 'boolean') isModuleActive = cfg.enabled;
+                
+                // 恢复选中的应用状态
                 if (Array.isArray(cfg.targets)) {
+                    apps.forEach(app => app.selected = false);
                     cfg.targets.forEach(pkg => {
                         const app = apps.find(a => a.pkg === pkg);
                         if (app) app.selected = true;
                     });
                 }
+                
                 if (Array.isArray(cfg.rules) && cfg.rules.length) rules = cfg.rules;
                 if (cfg.appendMagic) appendMagic = cfg.appendMagic;
-            } catch(e) {}
+            } catch(e) { console.error("解析配置失败", e); }
         }
 
+        // ================= 系统功能跳转 =================
         function openBatterySettings() {
             if (window.AndroidBridge && window.AndroidBridge.openBatterySettings) {
                 window.AndroidBridge.openBatterySettings();
@@ -756,6 +806,7 @@
             }
         }
 
+        // ================= 底栏滑动切页 =================
         let startX = 0; let startY = 0; let isDragging = false;
         bottomNav.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; isDragging = true; }, { passive: true });
         bottomNav.addEventListener('touchend', (e) => {
@@ -770,6 +821,7 @@
             }
         });
 
+        // ================= 渲染逻辑 =================
         function renderRecentRules() {
             const container = document.getElementById('recentRules');
             if (rules.length === 0) { container.innerHTML = '<div style="text-align:center;color:var(--text-sub);padding:10px;font-size:14px;">暂无魔法喵~</div>'; return; }
@@ -810,7 +862,7 @@
                 const item = document.createElement('div');
                 item.className = `app-item glass ${app.selected ? 'selected' : ''}`;
                 
-                // 关键修改：将 DOM 元素本身传进点击事件，方便直接修改类名
+                // 将 DOM 元素本身传进点击事件，防止列表整体重绘导致卡顿
                 item.onclick = function() { toggleApp(index, this); };
                 
                 item.innerHTML = `
@@ -826,7 +878,6 @@
             updateAppStatusUI();
         }
         
-        // 添加一个专门更新计数 UI 的函数
         function updateAppStatusUI() {
             let selectedCount = apps.filter(a => a.selected).length;
             document.getElementById('appCount').innerText = selectedCount;
@@ -841,7 +892,7 @@
             renderApps(document.getElementById('appSearch').value);
         }
 
-        // 关键修改：点击应用不再重新渲染整个列表，只修改当前元素的状态
+        // ================= 交互逻辑 =================
         function toggleApp(index, element) {
             apps[index].selected = !apps[index].selected;
             
@@ -879,9 +930,8 @@
             if (from && to) { rules.push({ from, to }); renderAll(); closeModal(); saveConfig(); } else { alert('请填写完整的魔法词条喵~'); }
         }
 
-        loadConfig();
-        renderAll();
-        updateAppendUI();
+        // ================= 启动！ =================
+        initAppData();
     </script>
 </body>
 </html>
