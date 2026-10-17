@@ -83,10 +83,8 @@ class LauncherActivity : AppCompatActivity() {
         
         val webView = WebView(this)
         
-        // 强制 WebView 渲染层透明
+        // 强制 WebView 渲染层透明，但不再使用 SOFTWARE 软件渲染（这会导致毛玻璃卡死）
         webView.setBackgroundColor(Color.TRANSPARENT) 
-        // 关闭硬件加速（部分机型开启硬件加速会导致透明背景黑屏）
-        webView.setLayerType(WebView.LAYER_TYPE_SOFTWARE, null) 
         
         val settings = webView.settings
         settings.javaScriptEnabled = true
@@ -99,8 +97,6 @@ class LauncherActivity : AppCompatActivity() {
         
         setContentView(webView)
 
-        // 注意：这里把涉及 binding.bottomNav 的代码删掉了，避免空指针闪退！
-        // 直接设置状态栏和导航栏透明
         window.navigationBarColor = Color.TRANSPARENT
         window.statusBarColor = Color.TRANSPARENT
 
