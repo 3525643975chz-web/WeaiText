@@ -67,15 +67,15 @@ class LauncherActivity : AppCompatActivity() {
     internal val prefCurrentTab = "current_tab"
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 强行干掉窗口背景色（防止系统底层白/黑屏）
-        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        
         val themeCfg = PaletteStore.load(this)
         AppCompatDelegate.setDefaultNightMode(PaletteStore.appcompatNightMode(themeCfg.themeMode))
         setTheme(PaletteStore.themeStyleRes(themeCfg.palette))
         
-        super.onCreate(savedInstanceState)
+        super.onCreate(savedInstanceState) // 必须先初始化，否则获取 window 会闪退
         
+        // 初始化后再设置背景透明
+        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
         if (themeCfg.palette == Palette.SYSTEM) {
             DynamicColors.applyToActivityIfAvailable(this)
         }
@@ -83,11 +83,11 @@ class LauncherActivity : AppCompatActivity() {
         
         val webView = WebView(this)
         
-        // 初始设为透明，防止加载时闪背景色
+        // 强制 WebView 渲染层透明
         webView.setBackgroundColor(Color.TRANSPARENT) 
         webView.setLayerType(WebView.LAYER_TYPE_HARDWARE, null)
         
-        // 🌟 核心：让整个网页先透明，加载完后平滑淡入（0.6秒）
+        // 🌟 核心：让整个网页先透明，加载完后平滑淡入
         webView.alpha = 0f
         
         val settings = webView.settings
@@ -101,7 +101,7 @@ class LauncherActivity : AppCompatActivity() {
         
         setContentView(webView)
 
-        // 延迟300毫秒后开始淡入（不管页面加载完没有，整个容器先浮现）
+        // 延迟300毫秒后开始淡入（配合 HTML 的动画，完美衔接）
         webView.postDelayed({
             webView.animate()
                 .alpha(1f)
