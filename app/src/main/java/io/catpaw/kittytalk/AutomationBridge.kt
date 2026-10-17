@@ -27,12 +27,7 @@ class AutomationBridge : AccessibilityService() {
         private const val QQ2_ID_PREFIX = "com.tencent.qq:id/"
 
         private const val LOG_MAX = 400
-        private data class LogEntry(
-            val message: String,
-            var firstTs: String,
-            var lastTs: String,
-            var count: Int = 1
-        )
+        private data class LogEntry(val message: String, var firstTs: String, var lastTs: String, var count: Int = 1)
         private val logList = ArrayDeque<LogEntry>()
         
         @Volatile
@@ -53,25 +48,12 @@ class AutomationBridge : AccessibilityService() {
         }
 
         @Synchronized
-        fun getLogs(): List<String> = logList.map { e ->
-            when {
-                e.count <= 1 -> "[${e.firstTs}] ${e.message}"
-                e.firstTs == e.lastTs -> "[${e.firstTs}] ${e.message} *${e.count}"
-                else -> "[${e.firstTs}/${e.lastTs}] ${e.message} *${e.count}"
-            }
-        }
-
+        fun getLogs(): List<String> = logList.map { e -> "[${e.firstTs}] ${e.message}" }
         @Synchronized
-        fun clearLogs() {
-            logList.clear()
-            instance?.onNewLog()
-        }
+        fun clearLogs() { logList.clear(); instance?.onNewLog() }
     }
 
-    private fun onNewLog() {
-        val l = logListener
-        if (l != null) mainHandler.post { l() }
-    }
+    private fun onNewLog() { logListener?.let { mainHandler.post { it() } } }
 
     private var isQQ = false
     private var isWechat = false 
@@ -88,7 +70,6 @@ class AutomationBridge : AccessibilityService() {
     private var shizukuKeepAlive = false
     
     private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
-    // 🌟 优化打字卡顿：将延迟从 50ms 改为 120ms，给 CPU 留出喘息时间
     private val TEXT_CHANGE_DELAY_MS = 120L
     private var pendingTextRunnable: Runnable? = null
     private val CONTENT_CHANGE_DELAY_MS = 120L
@@ -104,7 +85,6 @@ class AutomationBridge : AccessibilityService() {
             if (processing) {
                 val elapsed = System.currentTimeMillis() - processingStart
                 if (elapsed >= 5000L) {
-                    addLog("看门狗：处理卡死 ${elapsed}ms，强制重置")
                     processing = false
                 } else {
                     mainHandler.postDelayed(this, 5000L - elapsed)
@@ -128,14 +108,11 @@ class AutomationBridge : AccessibilityService() {
             val root = rootInActiveWindow ?: return@Runnable
             val inputNode = findInputField(root) ?: return@Runnable
             val raw = inputNode.text?.toString() ?: ""
-            val hint = if (Build.VERSION.SDK_INT >= 26) {
-                runCatching { inputNode.hintText?.toString() }.getOrNull()
-            } else null
+            val hint = if (Build.VERSION.SDK_INT >= 26) runCatching { inputNode.hintText?.toString() }.getOrNull() else null
             val isHint = raw.isNotEmpty() && !hint.isNullOrEmpty() && raw.trim() == hint.trim()
             if (raw.isNotEmpty() && !isHint && inputNode.isFocused && inputNode.isEditable) {
                 lastSet = raw
                 userOriginal = raw
-                addLog("窗口切换后同步：已有文本，仅同步状态不处理")
             }
         } catch (_: Exception) {
         } finally {
@@ -147,7 +124,6 @@ class AutomationBridge : AccessibilityService() {
         super.onCreate()
         try {
             instance = this
-            addLog("服务 onCreate")
             reload()
         } catch (e: Throwable) {
             Log.e(TAG, "onCreate 异常: " + e.message)
@@ -156,33 +132,14 @@ class AutomationBridge : AccessibilityService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        addLog("服务 onDestroy 实例已释放")
         instance = null
-    }
-
-    override fun onUnbind(intent: android.content.Intent?): Boolean {
-        addLog("服务 onUnbind 被系统断开绑定")
-        return super.onUnbind(intent)
     }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         try {
             reload()
-            addLog("服务已连接并启动，功能开关=$funcEnabled")
-            if (shizukuKeepAlive) {
-                bgExecutor.execute {
-                    try {
-                        val result = PrivilegeBridge.applyKeepAlive(this@AutomationBridge)
-                        addLog("Shizuku 白名单结果：$result")
-                    } catch (e: Throwable) {
-                        addLog("Shizuku 白名单执行异常：${e.message}")
-                    }
-                }
-            }
-        } catch (e: Throwable) {
-            Log.e(TAG, "onServiceConnected 异常: " + e.message)
-        }
+        } catch (e: Throwable) {}
     }
 
     fun reload() {
@@ -198,12 +155,7 @@ class AutomationBridge : AccessibilityService() {
         sentenceTrigger = prefs.getBoolean("sentence_trigger", false)
         shizukuKeepAlive = prefs.getBoolean("shizuku_keepalive", false)
         allAppsEnabled = prefs.getBoolean("all_apps_enabled", false)
-        floatCollapseOnCopy = prefs.getBoolean("float_collapse_on_copy", true)
         whitelist = WhitelistStore.load(this)
-    }
-
-    fun setFuncEnabled(enabled: Boolean) {
-        funcEnabled = enabled
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -217,20 +169,15 @@ class AutomationBridge : AccessibilityService() {
     private fun handleAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         val funcOn = getSharedPreferences("qq_settings", Context.MODE_PRIVATE).getBoolean("func_enabled", true)
-        if (!funcOn) {
-            if (lastFuncOnState) {
-                addLog("功能开关已关闭，跳过替换")
-                lastFuncOnState = false
-            }
-            return
-        }
-        lastFuncOnState = true
+        if (!funcOn) return
+        
         val pkg = event.packageName?.toString() ?: return
         lastEventPkg = pkg
         if (pkg == packageName) return
         if (isInputMethodPackage(pkg)) return
         if (!isSupportedPackage(pkg)) return
         
+        // 🌟 判断微信
         isQQ = pkg.startsWith(PKG_MOBILEQQ) || pkg == PKG_QQ || pkg == PKG_TIM
         isWechat = pkg == PKG_WECHAT
 
@@ -243,21 +190,12 @@ class AutomationBridge : AccessibilityService() {
                 mainHandler.removeCallbacks(syncInputStateTask)
                 mainHandler.postDelayed(syncInputStateTask, 150)
             }
-
-            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
-                if (isSendButton(event)) {
-                    cancelPending()
-                    doProcess(false)
-                }
-            }
-
             AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
                 verifyPending = false
                 lastPasteLike = isPasteLikeEvent(event)
                 scheduleTextChange()
                 textChangeCount++
             }
-
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
                 if (pendingTextRunnable == null && pendingContentRunnable == null) {
                     val r = Runnable {
@@ -301,9 +239,7 @@ class AutomationBridge : AccessibilityService() {
             val hasDigit = slice.any { it.isDigit() }
             if (hasPunct) return slice.any { it.isLetter() }
             if (hasDigit) return false
-            val special = slice.any {
-                !it.isLetter() && !it.isDigit() && it != '\n' && it !in punctSet && !it.isWhitespace()
-            }
+            val special = slice.any { !it.isLetter() && !it.isDigit() && it != '\n' && it !in punctSet && !it.isWhitespace() }
             if (special) return false
             slice.length >= 30
         } catch (_: Exception) {
@@ -312,18 +248,11 @@ class AutomationBridge : AccessibilityService() {
     }
 
     private fun cancelPending() {
-        val r = pendingTextRunnable
-        if (r != null) {
-            mainHandler.removeCallbacks(r)
-            pendingTextRunnable = null
-        }
-        val cr = pendingContentRunnable
-        if (cr != null) {
-            mainHandler.removeCallbacks(cr)
-            pendingContentRunnable = null
-        }
+        pendingTextRunnable?.let { mainHandler.removeCallbacks(it); pendingTextRunnable = null }
+        pendingContentRunnable?.let { mainHandler.removeCallbacks(it); pendingContentRunnable = null }
     }
 
+    // 🌟 强制放行微信
     private fun isSupportedPackage(pkg: String): Boolean =
         allAppsEnabled || pkg.startsWith(PKG_MOBILEQQ) || pkg == PKG_QQ ||
             pkg == PKG_TIM || pkg == PKG_WECHAT || whitelist.any { it.pkg == pkg && it.enabled }
@@ -331,9 +260,7 @@ class AutomationBridge : AccessibilityService() {
     private fun isInputMethodPackage(pkg: String?): Boolean {
         if (pkg.isNullOrEmpty()) return false
         val p = pkg.lowercase()
-        return p.contains("inputmethod") ||
-            p.startsWith("com.baidu.input") ||
-            p.startsWith("com.sohu.inputmethod")
+        return p.contains("inputmethod") || p.startsWith("com.baidu.input") || p.startsWith("com.sohu.inputmethod")
     }
 
     private fun acquireRootForInput(): AccessibilityNodeInfo? {
@@ -347,20 +274,11 @@ class AutomationBridge : AccessibilityService() {
         }
         runCatching {
             val wins = windows ?: return@runCatching
-            val ordered = wins.sortedByDescending { w ->
-                when {
-                    w.isFocused -> 3
-                    w.isActive -> 2
-                    else -> 1
-                }
-            }
+            val ordered = wins.sortedByDescending { w -> when { w.isFocused -> 3; w.isActive -> 2; else -> 1 } }
             for (w in ordered) {
                 val r = w.root ?: continue
                 val p = r.packageName?.toString() ?: ""
-                if (p == packageName || isInputMethodPackage(p)) {
-                    r.recycle()
-                    continue
-                }
+                if (p == packageName || isInputMethodPackage(p)) { r.recycle(); continue }
                 return r
             }
         }
@@ -372,20 +290,10 @@ class AutomationBridge : AccessibilityService() {
             val f = findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return null
             try {
                 val p = f.packageName?.toString() ?: ""
-                val ok = runCatching {
-                    f.isEditable || f.className?.toString()?.endsWith("EditText") == true
-                }.getOrDefault(false)
-                if (ok && p != packageName && !isInputMethodPackage(p)) {
-                    AccessibilityNodeInfo.obtain(f)
-                } else {
-                    null
-                }
-            } finally {
-                f.recycle()
-            }
-        } catch (_: Throwable) {
-            null
-        }
+                val ok = runCatching { f.isEditable || f.className?.toString()?.endsWith("EditText") == true }.getOrDefault(false)
+                if (ok && p != packageName && !isInputMethodPackage(p)) AccessibilityNodeInfo.obtain(f) else null
+            } finally { f.recycle() }
+        } catch (_: Throwable) { null }
     }
 
     private fun doProcess(isTextChange: Boolean, quietNoInput: Boolean = false) {
@@ -437,20 +345,34 @@ class AutomationBridge : AccessibilityService() {
                     }
 
                     if (isWechat) {
+                        // 🌟 微信终极制裁
                         var success = setText(inputNode, newText)
                         if (!success) {
-                            addLog("微信原生写入失败，尝试剪贴板粘贴大法")
                             success = pasteText(inputNode, newText)
+                        }
+                        // 微信输入框会自己刷新，再尝试一遍强制粘贴
+                        if (!success) {
+                            mainHandler.postDelayed({
+                                try {
+                                    val curRoot = rootInActiveWindow
+                                    val curInput = findInputField(curRoot)
+                                    if (curInput != null) {
+                                        pasteText(curInput, newText)
+                                        curInput.recycle()
+                                    }
+                                    curRoot?.recycle()
+                                } catch (_: Exception) {}
+                            }, 100)
+                            success = true // 假设成功
                         }
                         
                         if (success) {
                             lastSet = newText
                             setCursorEnd(inputNode, cursorIndex)
-                            addLog("微信替换成功！")
-                        } else {
-                            addLog("微信拦截了所有写入方式")
+                            addLog("微信替换指令已发送！")
                         }
                     } else {
+                        // 其他应用正常写入
                         if (setText(inputNode, newText)) {
                             lastSet = newText
                             setCursorEnd(inputNode, cursorIndex)
@@ -512,7 +434,6 @@ class AutomationBridge : AccessibilityService() {
             }
             return pasteSuccess
         } catch (e: Exception) {
-            Log.e(TAG, "粘贴失败: ${e.message}")
             return false
         }
     }
@@ -533,13 +454,10 @@ class AutomationBridge : AccessibilityService() {
             tailPending = false
             return true
         }
-        
-        // 🌟 核心修复：如果是纯空白字符（换行、空格），直接拦截，绝对不自动加后缀！
         if (raw.isBlank()) {
             lastSet = raw
             return true
         }
-
         if (justSwitchedWindow && lastSet.isEmpty() && raw.contains("\n") && !pasteLike) {
             justSwitchedWindow = false
             lastSet = raw
@@ -574,20 +492,6 @@ class AutomationBridge : AccessibilityService() {
             }
         }
         return false
-    }
-
-    private fun isSendButton(event: AccessibilityEvent): Boolean {
-        val node = event.source ?: return false
-        return try {
-            val text = node.text?.toString() ?: ""
-            val desc = node.contentDescription?.toString() ?: ""
-            val id = node.viewIdResourceName ?: ""
-            val cls = node.className?.toString() ?: ""
-            val label = text + desc
-            label.contains("发送") || label.contains("send", true) || id.contains("send", true) || cls.contains("Button")
-        } catch (_: Exception) {
-            false
-        }
     }
 
     private var inputFailureCount = 0
@@ -731,9 +635,6 @@ class AutomationBridge : AccessibilityService() {
         return null
     }
 
-    override fun onInterrupt() {
-        addLog("onInterrupt（服务被系统中断）")
-    }
-
+    override fun onInterrupt() {}
     override fun onGesture(gestureId: Int): Boolean = false
 }
