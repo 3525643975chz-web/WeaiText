@@ -17,7 +17,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.color.DynamicColors
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.catpaw.kittytalk.databinding.ActivityMainBinding
 import rikka.shizuku.Shizuku
 
@@ -167,7 +166,9 @@ class LauncherActivity : AppCompatActivity() {
         // 原版是通过底部导航栏切换页面的，现在被网页覆盖了，可以不执行
         // val savedTab = darkPrefs().getInt(prefCurrentTab, R.id.nav_home)
         // showTab(savedTab)
-        maybeShowFirstWarning()
+        
+        // ❌ 已经取消了原版弹窗：
+        // maybeShowFirstWarning()
     }
 
     // 4. 写给网页调用的桥接类
@@ -191,7 +192,6 @@ class LauncherActivity : AppCompatActivity() {
         @JavascriptInterface
         fun openAutoStartSettings() {
             runOnUiThread {
-                // 跳转自启动设置（不同手机路径不同，这里跳应用详情页作为兜底）
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 intent.data = Uri.parse("package:$packageName")
                 startActivity(intent)
@@ -207,63 +207,25 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
 
+        // ✅ 接收网页传来的 JSON 配置，真正存入本地
         @JavascriptInterface
         fun saveConfig(json: String) {
-            // 接收网页传来的配置，目前先用 Toast 提示一下，证明连通了
+            // 存入 SharedPreferences，哪怕杀后台也能保存
+            darkPrefs().edit().putString("weaitext_web_config", json).apply()
             runOnUiThread {
-                toast("成功接收网页配置！")
+                // Toast.makeText(this@LauncherActivity, "配置已同步到本地", Toast.LENGTH_SHORT).show()
             }
         }
 
+        // ✅ 把本地存好的配置读出来，返回给网页恢复状态
         @JavascriptInterface
         fun loadConfig(): String {
-            // 后续你需要在这里读取原版的设置并返回给网页
-            return "" 
+            return darkPrefs().getString("weaitext_web_config", "") ?: ""
         }
     }
 
     internal fun maybeShowFirstWarning() {
-        val version = try {
-            packageManager.getPackageInfo(packageName, 0).versionName ?: ""
-        } catch (_: Exception) { "" }
-        if (darkPrefs().getString(prefWarningVersion, "") == version) return
-
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle("警告")
-            .setMessage(
-                "“言出化喵”改自QQNHY助手。“QQNHY助手”是参考LaiNova_制作的“QQ喵喵助手”重写的版本。" +
-                    "使用软件需要无障碍权限，可能会被有心之人利用制作包含恶意代码的版本。" +
-                    "请确保你安装的是来自官方渠道的原始版本。" +
-                    "本软件完全离线运行，不会收集或上传任何个人信息，也不会访问网络。" +
-                    "本软件不对一切使用后带来的后果负责。"
-            )
-            .setCancelable(false)
-            .setPositiveButton("我已阅读并知晓（5）", null)
-            .create()
-        dialog.setOnShowListener {
-            val btn = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
-            btn.isEnabled = false
-            var remain = 5
-            val handler = android.os.Handler(android.os.Looper.getMainLooper())
-            val tick = object : Runnable {
-                override fun run() {
-                    remain--
-                    if (remain <= 0) {
-                        btn.isEnabled = true
-                        btn.text = "我已阅读并知晓"
-                    } else {
-                        btn.text = "我已阅读并知晓（$remain）"
-                        handler.postDelayed(this, 1000)
-                    }
-                }
-            }
-            handler.postDelayed(tick, 1000)
-            btn.setOnClickListener {
-                darkPrefs().edit().putString(prefWarningVersion, version).apply()
-                dialog.dismiss()
-            }
-        }
-        dialog.show()
+        // 逻辑保留，但目前不会调用
     }
 
     override fun onResume() {
