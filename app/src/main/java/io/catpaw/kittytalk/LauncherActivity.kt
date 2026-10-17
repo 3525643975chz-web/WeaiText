@@ -83,7 +83,7 @@ class LauncherActivity : AppCompatActivity() {
         
         val webView = WebView(this)
         
-        // 强制 WebView 渲染层透明，但不再使用 SOFTWARE 软件渲染（这会导致毛玻璃卡死）
+        // 强制 WebView 渲染层透明，保留 GPU 硬件加速处理毛玻璃
         webView.setBackgroundColor(Color.TRANSPARENT) 
         
         val settings = webView.settings
