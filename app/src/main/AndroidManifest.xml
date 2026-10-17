@@ -15,10 +15,10 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.QQReplyApp">
 
+        <!-- 🌟 核心修改：删除了 android:excludeFromRecents="true"，让它可以正常留在多任务里 -->
         <activity
             android:name=".LauncherActivity"
             android:exported="true"
-            android:excludeFromRecents="true"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
