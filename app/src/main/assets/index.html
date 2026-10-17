@@ -8,78 +8,27 @@
         :root {
             --bg-color: #E8ECF1;
             --glass-bg: rgba(255, 255, 255, 0.55);
-            --glass-bg-hover: rgba(255, 255, 255, 0.65);
             --glass-border: rgba(255, 255, 255, 0.7);
-            --glass-border-top: rgba(255, 255, 255, 0.9);
-            --glass-shadow: 0 12px 40px rgba(31, 38, 135, 0.12),
-                           0 4px 16px rgba(31, 38, 135, 0.06),
-                           inset 0 2px 4px rgba(255, 255, 255, 0.9);
             --text-main: #1C1C1E;
             --text-sub: #8E8E93;
-            --accent-red: #FF3B30;
             --accent-green: #34C759;
+            --accent-red: #FF3B30;
             --cute-pink: #5B8DEF;
-            --cute-pink-light: rgba(91, 141, 239, 0.12);
             --app-max-width: 480px;
             --card-radius: 20px;
+            --glass-shadow: 0 12px 40px rgba(31, 38, 135, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.9);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-color); font-family: -apple-system, sans-serif; color: var(--text-main); user-select: none; }
         
-        html, body { 
-            width: 100%; height: 100%; overflow: hidden; 
-            background: var(--bg-color); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            color: var(--text-main); user-select: none; position: relative; 
-            -webkit-touch-callout: none; 
-        }
+        .bg-image { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; background: url("https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1080&q=80") center/cover no-repeat; }
+        .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: linear-gradient(180deg, rgba(200, 215, 235, 0.5) 0%, rgba(220, 228, 240, 0.3) 100%); }
 
-        .bg-image {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3;
-            background: url("https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1080&q=80") center/cover no-repeat;
-        }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%); border: 1px solid var(--glass-border); border-top: 1px solid rgba(255, 255, 255, 0.9); box-shadow: var(--glass-shadow); border-radius: var(--card-radius); position: relative; overflow: hidden; transition: transform 0.15s ease; }
+        .glass:active { transform: scale(0.98); }
 
-        .bg-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
-            background: linear-gradient(180deg, rgba(200, 215, 235, 0.5) 0%, rgba(220, 228, 240, 0.3) 100%);
-        }
-
-        .glass { 
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px) saturate(150%) contrast(105%);
-            -webkit-backdrop-filter: blur(16px) saturate(150%) contrast(105%);
-            border: 1px solid var(--glass-border);
-            border-top: 1px solid var(--glass-border-top);
-            border-left: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: var(--glass-shadow);
-            border-radius: var(--card-radius);
-            position: relative;
-            overflow: hidden;
-            transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-        }
-        
-        .glass:hover {
-            background: var(--glass-bg-hover);
-            box-shadow: 0 20px 60px rgba(31, 38, 135, 0.15),
-                       0 8px 24px rgba(31, 38, 135, 0.08),
-                       inset 0 2px 4px rgba(255, 255, 255, 0.95);
-        }
-        
-        .glass:active {
-            transform: scale(0.98);
-        }
-
-        .app-container { 
-            width: 100%; 
-            max-width: var(--app-max-width); 
-            height: 100%; 
-            position: relative; 
-            display: flex; 
-            flex-direction: column; 
-            margin: 0 auto;
-            background: transparent; 
-        }
-
+        .app-container { width: 100%; max-width: var(--app-max-width); height: 100%; position: relative; display: flex; flex-direction: column; margin: 0 auto; }
         .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 1; }
         .page.active { display: flex; animation: fadeIn 0.3s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -91,11 +40,12 @@
         .home-header h1 { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
         .home-header p { font-size: 14px; color: var(--text-sub); margin-top: 4px; font-weight: 500; }
 
-        .switch-card { padding: 28px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .switch-info h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .switch-card { padding: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .switch-info h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
         .switch-info p { font-size: 13px; color: var(--text-sub); }
-        .toggle-switch { width: 56px; height: 32px; border-radius: 16px; background: rgba(0,0,0,0.08); position: relative; cursor: pointer; transition: background 0.3s; }
-        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.12); transition: transform 0.3s ease; }
+        
+        .toggle-switch { width: 56px; height: 32px; border-radius: 16px; background: rgba(0,0,0,0.08); position: relative; cursor: pointer; transition: background 0.3s; flex-shrink: 0; }
+        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.12); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .toggle-switch.on { background: var(--accent-green); }
         .toggle-switch.on::after { transform: translateX(24px); }
 
@@ -108,17 +58,20 @@
         .action-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
         .action-item { padding: 22px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
         .action-text { font-size: 16px; font-weight: 600; }
-        .action-arrow { color: #C7C7CC; font-size: 20px; }
+        .action-arrow { color: #C7C7CC; font-size: 20px; transition: transform 0.3s; }
+        .action-item:active .action-arrow { transform: translateX(4px); }
         .recent-rules { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-        .recent-item { display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
+        .recent-item { display: flex; align-items: center; justify-content: space-between; font-size: 14px; animation: recentSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
         .recent-item span { font-weight: 600; }
         .recent-arrow { color: var(--text-sub); margin: 0 8px; font-weight: 300; }
+        @keyframes recentSlideIn { 0% { opacity: 0; transform: translateX(-10px); } 100% { opacity: 1; transform: translateX(0); } }
 
         .config-rules { padding: 8px 16px; display: flex; flex-direction: column; }
-        .config-rule-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
+        .config-rule-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.04); animation: ruleSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
         .config-rule-item:last-child { border-bottom: none; }
-        .delete-btn { color: #A1A1A6; cursor: pointer; padding: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: all 0.2s; }
-        .delete-btn:active { color: var(--accent-red); background: rgba(255,59,48,0.1); }
+        .delete-btn { color: #A1A1A6; cursor: pointer; padding: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+        .delete-btn:active { color: var(--accent-red); background: rgba(255,59,48,0.1); transform: scale(0.8) rotate(10deg); }
+        @keyframes ruleSlideIn { 0% { opacity: 0; transform: translateX(-20px) scale(0.95); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
 
         #page-apps { padding: 0; } 
         .tool-section-title { font-size: 14px; font-weight: 700; color: var(--text-sub); margin: 24px 0 8px 12px; }
@@ -137,245 +90,60 @@
         .search-bar input::placeholder { color: var(--text-sub); }
         .apps-status { font-size: 14px; color: var(--text-sub); margin: 0 16px 16px 16px; flex-shrink: 0; position: relative; z-index: 10; }
         
-        .scroll-container { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 20px 20px 160px 20px; 
-            -webkit-overflow-scrolling: touch; 
-            -ms-overflow-style: none; 
-            scrollbar-width: none;
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-            mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-        }
+        .scroll-container { flex: 1; overflow-y: auto; padding: 20px 20px 160px 20px; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%); }
         .scroll-container::-webkit-scrollbar { display: none; }
         
-        .app-item { 
-            padding: 22px 24px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            cursor: pointer; 
-            margin-bottom: 18px; 
-            border-radius: 22px; 
-            transition: transform 0.2s ease, background 0.2s ease; 
-        }
-        .app-item:active {
-            transform: scale(0.96);
-        }
+        .app-item { padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 14px; border-radius: 22px; background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 4px 15px rgba(31, 38, 135, 0.05); transition: transform 0.15s ease, background 0.2s ease; }
+        .app-item:active { transform: scale(0.96); background: #fff; }
         .app-info { display: flex; flex-direction: column; gap: 4px; }
         .app-name { font-size: 16px; font-weight: 600; }
         .app-pkg { font-size: 12px; color: var(--text-sub); }
-        .app-check { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04); flex-shrink: 0; }
+        .app-check { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); flex-shrink: 0; }
         .app-item.selected .app-check { background: var(--cute-pink); border-color: var(--cute-pink); color: #fff; box-shadow: 0 3px 12px rgba(91, 141, 239, 0.4); transform: scale(1.1); }
         .app-check svg { opacity: 0; transition: opacity 0.2s; }
         .app-item.selected .app-check svg { opacity: 1; }
+        @keyframes checkBounce { 0% { transform: scale(1); } 30% { transform: scale(1.3); } 50% { transform: scale(0.9); } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .app-item.selected .app-check { animation: checkBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
         #page-about { display: none; flex-direction: column; align-items: center; justify-content: center; }
         #page-about.active { display: flex; }
         .about-card { width: 85%; max-width: 360px; padding: 45px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
-        .avatar-wrapper { position: relative; width: 130px; height: 130px; margin-bottom: 8px; }
-        .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: top; border: 3px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 25px rgba(31, 38, 135, 0.12); }
+        .avatar-wrapper { position: relative; width: 130px; height: 130px; margin-bottom: 8px; animation: avatarPulse 3s ease-in-out infinite; border-radius: 50%; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: top; border: 3px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 25px rgba(31, 38, 135, 0.12); transition: transform 0.3s; }
+        .avatar:active { transform: scale(0.95) rotate(5deg); }
         .author-name { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
         .author-role { font-size: 14px; color: var(--text-sub); font-weight: 500; margin-top: -8px; }
         .tag-container { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
         .tag { background: rgba(255,255,255,0.6); border: 1px solid rgba(91, 141, 239, 0.3); padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; color: var(--cute-pink); }
+        @keyframes avatarPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(91, 141, 239, 0.2); } 50% { box-shadow: 0 0 0 12px rgba(91, 141, 239, 0); } }
 
-        .bottom-nav { 
-            position: fixed; 
-            bottom: 24px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: calc(100% - 32px); 
-            max-width: var(--app-max-width); 
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(20px) saturate(150%) contrast(105%);
-            -webkit-backdrop-filter: blur(20px) saturate(150%) contrast(105%);
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            border-top: 1px solid rgba(255, 255, 255, 0.85);
-            border-radius: 30px; 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: center; 
-            padding: 8px 6px; 
-            padding-top: 12px; 
-            z-index: 100; 
-            overflow: visible; 
-            box-shadow: 0 20px 60px rgba(31, 38, 135, 0.12),
-                       0 8px 24px rgba(31, 38, 135, 0.06),
-                       inset 0 1px 1px rgba(255, 255, 255, 0.8);
-        }
-        
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8E8E93; font-size: 11px; cursor: pointer; flex: 1; gap: 4px; transition: color 0.2s; position: relative; }
+        .bottom-nav { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: var(--app-max-width); background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.7); border-top: 1px solid rgba(255, 255, 255, 0.85); border-radius: 30px; display: flex; justify-content: space-around; align-items: center; padding: 8px 6px; padding-top: 12px; z-index: 100; box-shadow: 0 20px 60px rgba(31, 38, 135, 0.12); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8E8E93; font-size: 11px; cursor: pointer; flex: 1; gap: 4px; }
         .nav-item.active { color: var(--cute-pink); font-weight: 700; }
         .nav-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+        .nav-item.active .nav-icon { animation: navBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes navBounce { 0% { transform: scale(1); } 30% { transform: scale(1.3) translateY(-3px); } 50% { transform: scale(0.95) translateY(0); } 70% { transform: scale(1.1) translateY(-1px); } 100% { transform: scale(1); } }
+        .nav-item:active { transform: scale(0.92); }
         
-        .nav-item-center { width: 46px; height: 46px; flex: 0 0 46px; background: linear-gradient(135deg, #5B8DEF, #7BA7F5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; font-weight: 300; box-shadow: 0 4px 15px rgba(91, 141, 239, 0.35); transform: translateY(-6px); cursor: pointer; margin: 0 6px; transition: transform 0.2s ease; }
-        .nav-item-center:active { transform: translateY(-3px) scale(0.95); }
+        .nav-item-center { width: 46px; height: 46px; flex: 0 0 46px; background: linear-gradient(135deg, #5B8DEF, #7BA7F5); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; font-weight: 300; box-shadow: 0 4px 15px rgba(91, 141, 239, 0.35); transform: translateY(-6px); cursor: pointer; margin: 0 6px; animation: floatCenter 3s ease-in-out infinite; }
+        .nav-item-center:active { transform: translateY(-3px) scale(0.9) !important; }
+        @keyframes floatCenter { 0%, 100% { transform: translateY(-6px); } 50% { transform: translateY(-10px); } }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(31, 38, 135, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-content { 
-            width: 85%; max-width: 340px; padding: 28px; 
-            display: flex; flex-direction: column; gap: 16px; 
-            border-radius: 28px; 
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(24px) saturate(160%) contrast(105%);
-            -webkit-backdrop-filter: blur(24px) saturate(160%) contrast(105%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-top: 1px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 30px 80px rgba(31, 38, 135, 0.15),
-                       0 12px 36px rgba(31, 38, 135, 0.08),
-                       inset 0 2px 4px rgba(255, 255, 255, 0.95);
-            position: relative;
-            overflow: hidden;
-            transform: scale(0.95);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
+        .modal-content { width: 85%; max-width: 340px; padding: 28px; display: flex; flex-direction: column; gap: 16px; border-radius: 28px; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 30px 80px rgba(31, 38, 135, 0.15); transform: scale(0.95); transition: transform 0.3s; }
         .modal-overlay.active .modal-content { transform: scale(1); }
         .modal-content h3 { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 8px; }
-        .modal-input { width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.7); font-size: 16px; outline: none; transition: all 0.2s; }
+        .modal-input { width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.7); font-size: 16px; outline: none; }
         .modal-input:focus { border-color: rgba(91, 141, 239, 0.5); box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.1); }
         .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
         .modal-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .modal-btn:active { transform: scale(0.97); }
+        .modal-btn:active { transform: scale(0.95); }
         .btn-cancel { background: rgba(0,0,0,0.04); color: var(--text-main); }
         .btn-confirm { background: var(--cute-pink); color: #fff; box-shadow: 0 4px 12px rgba(91, 141, 239, 0.25); }
-        
-        .search-bar { 
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(14px) saturate(140%);
-            -webkit-backdrop-filter: blur(14px) saturate(140%);
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            box-shadow: 0 8px 28px rgba(31, 38, 135, 0.08),
-                       inset 0 2px 4px rgba(255, 255, 255, 0.8);
-        }
-        
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(91, 141, 239, 0.2); border-radius: 2px; }
-        ::selection { background: rgba(91, 141, 239, 0.15); color: var(--text-main); }
 
-        /* 动画部分保留，但去掉了 app-item 的入场动画 */
-        .glass { animation: cardPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        @keyframes cardPopIn {
-            0% { opacity: 0; transform: scale(0.9) translateY(20px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        
-        .stat-card:active, .action-item:active, .tool-item:active, .app-item:active {
-            transform: scale(0.94);
-            transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        .toggle-switch::after { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, box-shadow 0.3s ease; }
-        .toggle-switch.on::after { box-shadow: 0 2px 12px rgba(52, 199, 89, 0.4); }
-        
-        .nav-item.active .nav-icon { animation: navBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes navBounce {
-            0% { transform: scale(1); }
-            30% { transform: scale(1.3) translateY(-3px); }
-            50% { transform: scale(0.95) translateY(0); }
-            70% { transform: scale(1.1) translateY(-1px); }
-            100% { transform: scale(1); }
-        }
-        
-        .nav-item-center { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; animation: floatCenter 3s ease-in-out infinite; }
-        .nav-item-center:active { transform: translateY(-3px) scale(0.9) !important; box-shadow: 0 2px 8px rgba(91, 141, 239, 0.3); }
-        @keyframes floatCenter {
-            0%, 100% { transform: translateY(-6px); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .modal-overlay.active .modal-content { animation: modalBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes modalBounce {
-            0% { opacity: 0; transform: scale(0.8) translateY(20px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        
-        .delete-btn:active { transform: scale(0.8) rotate(10deg); box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.1); }
-        
-        .app-item.selected .app-check { animation: checkBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes checkBounce {
-            0% { transform: scale(1); }
-            30% { transform: scale(1.3); }
-            50% { transform: scale(0.9); }
-            70% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        
-        .header-paw { display: inline-block; animation: pawWiggle 2s ease-in-out infinite; transform-origin: center bottom; }
-        @keyframes pawWiggle {
-            0%, 100% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(15deg) scale(1.1); }
-            50% { transform: rotate(-10deg) scale(1); }
-            75% { transform: rotate(5deg) scale(1.05); }
-            100% { transform: rotate(0deg) scale(1); }
-        }
-        
-        .stat-num { display: inline-block; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .stat-card:active .stat-num { transform: scale(0.85); }
-        .action-arrow { display: inline-block; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .action-item:active .action-arrow { transform: translateX(4px); }
-        
-        .search-bar:focus-within { box-shadow: 0 6px 25px rgba(91, 141, 239, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.7), 0 0 0 3px rgba(91, 141, 239, 0.1); border-color: rgba(91, 141, 239, 0.4); }
-        .modal-input:focus { border-color: rgba(91, 141, 239, 0.5); box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.1); transform: scale(1.01); }
-        
-        .page.active { animation: pageBounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes pageBounceIn {
-            0% { opacity: 0; transform: scale(0.96) translateY(10px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        
-        .avatar-wrapper { animation: avatarPulse 3s ease-in-out infinite; }
-        @keyframes avatarPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(91, 141, 239, 0.2); }
-            50% { box-shadow: 0 0 0 12px rgba(91, 141, 239, 0); }
-        }
-        .avatar { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .avatar:active { transform: scale(0.95) rotate(5deg); }
-
-        .config-rule-item { animation: ruleSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        @keyframes ruleSlideIn {
-            0% { opacity: 0; transform: translateX(-20px) scale(0.95); }
-            100% { opacity: 1; transform: translateX(0) scale(1); }
-        }
-        .tool-card { animation: toolCardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        @keyframes toolCardIn {
-            0% { opacity: 0; transform: translateY(25px) scale(0.95); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .action-item { animation: actionSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        @keyframes actionSlideIn {
-            0% { opacity: 0; transform: translateX(-15px); }
-            100% { opacity: 1; transform: translateX(0); }
-        }
-        
-        .stats-grid .stat-card:nth-child(1) { animation-delay: 0.05s; }
-        .stats-grid .stat-card:nth-child(2) { animation-delay: 0.1s; }
-        .action-list .action-item:nth-child(1) { animation-delay: 0.05s; }
-        .action-list .action-item:nth-child(2) { animation-delay: 0.1s; }
-        .action-list .action-item:nth-child(3) { animation-delay: 0.15s; }
-        .config-rules .config-rule-item:nth-child(1) { animation-delay: 0.05s; }
-        .config-rules .config-rule-item:nth-child(2) { animation-delay: 0.1s; }
-        .config-rules .config-rule-item:nth-child(3) { animation-delay: 0.15s; }
-        .config-rules .config-rule-item:nth-child(4) { animation-delay: 0.2s; }
-        .config-rules .config-rule-item:nth-child(5) { animation-delay: 0.25s; }
-        .tool-card:nth-child(1) { animation-delay: 0.05s; }
-        .tool-card:nth-child(2) { animation-delay: 0.1s; }
-        
-        .nav-item { transition: color 0.3s ease; }
-        .nav-item:active { transform: scale(0.92); }
-        #statusTitle { transition: color 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .recent-item { animation: recentSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        @keyframes recentSlideIn {
-            0% { opacity: 0; transform: translateX(-10px); }
-            100% { opacity: 1; transform: translateX(0); }
-        }
-        
-        .page:not(.active) .glass, .page:not(.active) .tool-card, .page:not(.active) .action-item, .page:not(.active) .config-rule-item {
-            animation: none; opacity: 0;
-        }
-
+        .glass, .app-item { animation: cardPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+        @keyframes cardPopIn { 0% { opacity: 0; transform: scale(0.9) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
     </style>
 </head>
 <body>
@@ -389,23 +157,35 @@
             <div class="scrollable-content">
                 <div class="home-header">
                     <h1>WeaiText</h1>
-                    <span class="header-paw">🐾</span>
+                    <span class="header-paw" style="font-size: 24px; animation: pawWiggle 2s infinite;">🐾</span>
                     <p style="position: absolute; top: 55px; left: 20px;">本喵的全局魔法领域</p>
                 </div>
+                
+                <!-- 主开关 -->
                 <div class="switch-card glass">
                     <div class="switch-info">
                         <h2 id="statusTitle">状态：喵喵出击！</h2>
-                        <p id="statusDesc">正在巡视 4 个领地喵~</p>
+                        <p id="statusDesc">正在巡视领地喵~</p>
                     </div>
                     <div class="toggle-switch on" id="mainToggle" onclick="toggleMainSwitch()"></div>
                 </div>
+
+                <!-- 隐藏后台开关 -->
+                <div class="switch-card glass">
+                    <div class="switch-info">
+                        <h2>隐藏后台通知</h2>
+                        <p>开启后不在通知栏显示，静默运行</p>
+                    </div>
+                    <div class="toggle-switch" id="bgToggle" onclick="toggleBackgroundMode()"></div>
+                </div>
+
                 <div class="stats-grid">
                     <div class="stat-card glass" onclick="switchPage('config', 1)">
-                        <div class="stat-num" id="ruleCount">5</div>
+                        <div class="stat-num" id="ruleCount">0</div>
                         <div class="stat-label">生效魔法 ➔</div>
                     </div>
                     <div class="stat-card glass" onclick="switchPage('app-select', 2)">
-                        <div class="stat-num" id="appCount">4</div>
+                        <div class="stat-num" id="appCount">0</div>
                         <div class="stat-label">目标领地 ➔</div>
                     </div>
                 </div>
@@ -425,10 +205,11 @@
                     </div>
                 </div>
                 <div class="section-title">最近施展</div>
-                <div class="recent-rules glass " id="recentRules"></div>
+                <div class="recent-rules glass" id="recentRules"></div>
             </div>
         </div>
 
+        <!-- 配置页 -->
         <div id="page-config" class="page">
             <div class="scrollable-content">
                 <div class="home-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;">
@@ -440,7 +221,7 @@
                 </div>
 
                 <div class="tool-section-title" style="margin-top: 0;">附加魔法</div>
-                <div class="tool-card glass " style="margin-bottom: 24px;">
+                <div class="tool-card glass " style="margin-bottom: 24px; background: rgba(255,255,255,0.7);">
                     <div class="tool-item" style="border-bottom: none; padding-bottom: 8px;">
                         <div style="display:flex; align-items:center;">
                             <div class="tool-icon">✨</div>
@@ -453,7 +234,7 @@
                     </div>
                     <div style="padding: 0 0 12px 0;">
                         <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px; padding-left: 4px;">自定义标识：</div>
-                        <input type="text" id="appendInput" class="modal-input" style="padding: 12px; font-size: 15px; border-radius: 12px; background: rgba(255,255,255,0.8); border: 1px solid rgba(0,0,0,0.05);" value="喵" placeholder="输入自定义标识（如：喵、汪、捏）" oninput="updateAppendSuffix(this.value)">
+                        <input type="text" id="appendInput" class="modal-input" style="padding: 12px; font-size: 15px;" value="喵" placeholder="输入自定义标识" oninput="updateAppendSuffix(this.value)">
                     </div>
                     <div class="tool-item" style="border-bottom: none; padding-top: 0; padding-bottom: 12px;">
                         <div style="font-size: 12px; color: var(--cute-pink); text-align: center; width: 100%;" id="appendPreview">
@@ -462,18 +243,19 @@
                     </div>
                 </div>
 
-                <div class="config-rules glass " id="configRuleList"></div>
+                <div class="config-rules glass" id="configRuleList"></div>
                 <div class="action-item glass" onclick="clearRules()" style="justify-content:center;color:var(--accent-red);font-weight:600;margin-top:20px;padding:16px;">
                     忘记所有魔法 (清空)
                 </div>
             </div>
         </div>
 
+        <!-- 工具页 -->
         <div id="page-apps" class="page">
             <div class="scrollable-content">
                 <div class="home-header">
                     <h1>工具</h1>
-                    <span class="header-paw">🐾</span>
+                    <span class="header-paw" style="font-size: 24px;">🐾</span>
                 </div>
                 
                 <div class="tool-section-title">应用选择</div>
@@ -483,7 +265,7 @@
                             <div class="tool-icon">📱</div>
                             <div class="tool-info">
                                 <div class="tool-name">选择生效应用</div>
-                                <div class="tool-desc" id="toolSelectedCount">已选 4 个应用</div>
+                                <div class="tool-desc" id="toolSelectedCount">已选 0 个应用</div>
                             </div>
                         </div>
                         <div class="action-arrow">›</div>
@@ -536,6 +318,7 @@
             </div>
         </div>
 
+        <!-- 应用选择页 -->
         <div id="page-app-select" class="page">
             <div class="apps-header-wrap">
                 <div class="home-header" style="display:flex;align-items:center;margin-bottom:0;">
@@ -549,13 +332,14 @@
                 <input type="text" placeholder="搜索领地" id="appSearch" oninput="filterApps()">
             </div>
             
-            <div class="apps-status" id="appsStatus">已选择 4 个领地喵~</div>
+            <div class="apps-status" id="appsStatus">已选择 0 个领地喵~</div>
 
             <div class="scroll-container" id="appScrollContainer">
                 <div class="action-list app-list" id="appList" style="gap: 0; margin-bottom: 0; padding-top: 10px;"></div>
             </div>
         </div>
 
+        <!-- 关于页 -->
         <div id="page-about" class="page">
             <div class="about-card glass ">
                 <div class="avatar-wrapper">
@@ -576,6 +360,7 @@
             </div>
         </div>
 
+        <!-- 底部导航 -->
         <div class="bottom-nav" id="bottomNav">
             <div class="nav-item active" id="nav-home" onclick="switchPage('home', 0)">
                 <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
@@ -598,8 +383,9 @@
             </div>
         </div>
 
+        <!-- 弹窗 -->
         <div class="modal-overlay" id="addModal">
-            <div class="modal-content glass ">
+            <div class="modal-content glass">
                 <h3>召唤新的喵喵魔法</h3>
                 <input type="text" class="modal-input" id="inputFrom" placeholder="原词 (如: 我)">
                 <input type="text" class="modal-input" id="inputTo" placeholder="替换为 (如: 本喵)">
@@ -613,12 +399,10 @@
     </div> 
 
     <script>
-        // ================= 数据状态 =================
-        let rules = [{ from: '我', to: '本喵' }, { from: '你', to: '杂鱼' }, { from: '他', to: '喵桑' }, { from: '她', to: '喵酱' }, { from: '宝宝', to: '蠢鱼' }];
-        
-        // 初始为空，等待从手机读取
+        let rules = [];
         let apps = [];
         let isModuleActive = true;
+        let isBackgroundMode = false;
         let appendMagic = { enabled: false, suffix: '喵' };
 
         let currentIndex = 0;
@@ -626,53 +410,30 @@
         const bottomNav = document.getElementById('bottomNav');
         const pageIds = ['home', 'config', 'apps', 'about'];
 
-        // ================= 初始化核心逻辑 =================
         function initAppData() {
-            // 1. 尝试从 Android 原生获取真实安装的应用
             if (window.AndroidBridge && window.AndroidBridge.getInstalledApps) {
                 try {
                     const nativeAppsStr = window.AndroidBridge.getInstalledApps();
-                    const nativeApps = JSON.parse(nativeAppsStr);
-                    
-                    apps = nativeApps.map(app => ({
-                        name: app.name,
-                        pkg: app.pkg,
-                        selected: false 
-                    }));
-                    
-                    // 按应用名称排序
-                    apps.sort((a, b) => a.name.localeCompare(b.name));
-                } catch (e) {
-                    console.error("获取应用列表失败", e);
-                    useMockApps();
-                }
-            } else {
-                // 浏览器预览环境
-                useMockApps();
+                    if (nativeAppsStr && nativeAppsStr !== "[]") {
+                        const nativeApps = JSON.parse(nativeAppsStr);
+                        apps = nativeApps.map(app => ({ name: app.name, pkg: app.pkg, selected: false }));
+                        apps.sort((a, b) => a.name.localeCompare(b.name));
+                    }
+                } catch (e) { console.error("获取应用列表失败", e); }
             }
 
-            // 2. 读取本地保存的配置（恢复之前选中的应用）
+            if (apps.length === 0) {
+                apps = [
+                    { name: '微信', pkg: 'com.tencent.mm', selected: true },
+                    { name: 'QQ', pkg: 'com.tencent.mobileqq', selected: true }
+                ];
+            }
+
             loadConfig();
-            
-            // 3. 刷新全量 UI
             renderAll();
             updateAppendUI();
         }
 
-        // 假数据备用（仅在电脑浏览器预览时生效）
-        function useMockApps() {
-            apps = [
-                { name: '微信', pkg: 'com.tencent.mm', selected: true },
-                { name: 'QQ', pkg: 'com.tencent.mobileqq', selected: true },
-                { name: '抖音', pkg: 'com.ss.android.ugc.aweme', selected: true },
-                { name: '哔哩哔哩', pkg: 'tv.danmaku.bili', selected: true },
-                { name: '支付宝', pkg: 'com.eg.android.AlipayGphone', selected: false },
-                { name: '淘宝', pkg: 'com.taobao.taobao', selected: false },
-                { name: '小红书', pkg: 'com.xingin.xhs', selected: false }
-            ];
-        }
-
-        // ================= 页面切换 =================
         function switchPage(pageId, navIndex) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const targetPage = document.getElementById('page-' + pageId);
@@ -695,7 +456,15 @@
             }
         }
 
-        // ================= 后缀魔法逻辑 =================
+        function toggleBackgroundMode() {
+            isBackgroundMode = !isBackgroundMode;
+            document.getElementById('bgToggle').classList.toggle('on', isBackgroundMode);
+            if (window.AndroidBridge && window.AndroidBridge.setBackgroundMode) {
+                window.AndroidBridge.setBackgroundMode(isBackgroundMode);
+            }
+            saveConfig();
+        }
+
         function toggleAppendMagic() {
             appendMagic.enabled = !appendMagic.enabled;
             document.getElementById('appendToggle').classList.toggle('on', appendMagic.enabled);
@@ -726,10 +495,10 @@
             }
         }
 
-        // ================= 配置保存与读取 =================
         function buildConfig() {
             return { 
                 enabled: isModuleActive, 
+                bgMode: isBackgroundMode, 
                 targets: apps.filter(a => a.selected).map(a => a.pkg), 
                 rules: rules,
                 appendMagic: appendMagic
@@ -745,21 +514,18 @@
         }
 
         function loadConfig() {
-            // 优先从原生读取（目前原生未实现，返回空），再兜底 localStorage
             let raw = '';
-            if (window.AndroidBridge && window.AndroidBridge.loadConfig) {
-                raw = window.AndroidBridge.loadConfig();
-            }
-            if (!raw) {
-                try { raw = localStorage.getItem('weaitext_cfg') || ''; } catch(e) {}
-            }
+            if (window.AndroidBridge && window.AndroidBridge.loadConfig) raw = window.AndroidBridge.loadConfig();
+            if (!raw) { try { raw = localStorage.getItem('weaitext_cfg') || ''; } catch(e) {} }
             
             if (!raw) return;
             try {
                 const cfg = JSON.parse(raw);
                 if (typeof cfg.enabled === 'boolean') isModuleActive = cfg.enabled;
-                
-                // 恢复选中的应用状态
+                if (typeof cfg.bgMode === 'boolean') {
+                    isBackgroundMode = cfg.bgMode;
+                    document.getElementById('bgToggle').classList.toggle('on', isBackgroundMode);
+                }
                 if (Array.isArray(cfg.targets)) {
                     apps.forEach(app => app.selected = false);
                     cfg.targets.forEach(pkg => {
@@ -767,61 +533,16 @@
                         if (app) app.selected = true;
                     });
                 }
-                
                 if (Array.isArray(cfg.rules) && cfg.rules.length) rules = cfg.rules;
                 if (cfg.appendMagic) appendMagic = cfg.appendMagic;
             } catch(e) { console.error("解析配置失败", e); }
         }
 
-        // ================= 系统功能跳转 =================
-        function openBatterySettings() {
-            if (window.AndroidBridge && window.AndroidBridge.openBatterySettings) {
-                window.AndroidBridge.openBatterySettings();
-            } else {
-                alert("请在手机系统设置 -> 应用管理 -> WeaiText -> 电池中，设置为无限制。");
-            }
-        }
+        function openBatterySettings() { if (window.AndroidBridge && window.AndroidBridge.openBatterySettings) window.AndroidBridge.openBatterySettings(); }
+        function openAccessibilitySettings() { if (window.AndroidBridge && window.AndroidBridge.openAccessibilitySettings) window.AndroidBridge.openAccessibilitySettings(); }
+        function openAutoStartSettings() { if (window.AndroidBridge && window.AndroidBridge.openAutoStartSettings) window.AndroidBridge.openAutoStartSettings(); }
+        function openNotificationSettings() { if (window.AndroidBridge && window.AndroidBridge.openNotificationSettings) window.AndroidBridge.openNotificationSettings(); }
 
-        function openAccessibilitySettings() {
-            if (window.AndroidBridge && window.AndroidBridge.openAccessibilitySettings) {
-                window.AndroidBridge.openAccessibilitySettings();
-            } else {
-                alert("请在手机系统设置 -> 无障碍 -> 已下载的应用中，开启 WeaiText 服务。");
-            }
-        }
-
-        function openAutoStartSettings() {
-            if (window.AndroidBridge && window.AndroidBridge.openAutoStartSettings) {
-                window.AndroidBridge.openAutoStartSettings();
-            } else {
-                alert("请在手机管家或系统设置中，允许 WeaiText 后台自启动。");
-            }
-        }
-
-        function openNotificationSettings() {
-            if (window.AndroidBridge && window.AndroidBridge.openNotificationSettings) {
-                window.AndroidBridge.openNotificationSettings();
-            } else {
-                alert("请在系统设置中允许 WeaiText 发送通知。");
-            }
-        }
-
-        // ================= 底栏滑动切页 =================
-        let startX = 0; let startY = 0; let isDragging = false;
-        bottomNav.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; isDragging = true; }, { passive: true });
-        bottomNav.addEventListener('touchend', (e) => {
-            if (!isDragging) return; isDragging = false;
-            const endX = e.changedTouches[0].clientX; const endY = e.changedTouches[0].clientY;
-            const deltaX = endX - startX; const deltaY = endY - startY;
-            if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
-                let newIndex = currentIndex;
-                if (deltaX < 0) newIndex = Math.min(currentIndex + 1, 3);
-                else newIndex = Math.max(currentIndex - 1, 0);
-                if (newIndex !== currentIndex) switchPage(pageIds[newIndex], newIndex);
-            }
-        });
-
-        // ================= 渲染逻辑 =================
         function renderRecentRules() {
             const container = document.getElementById('recentRules');
             if (rules.length === 0) { container.innerHTML = '<div style="text-align:center;color:var(--text-sub);padding:10px;font-size:14px;">暂无魔法喵~</div>'; return; }
@@ -860,11 +581,8 @@
                 if (filterText && !app.name.toLowerCase().includes(filterText.toLowerCase()) && !app.pkg.toLowerCase().includes(filterText.toLowerCase())) return;
                 if (app.selected) selectedCount++;
                 const item = document.createElement('div');
-                item.className = `app-item glass ${app.selected ? 'selected' : ''}`;
-                
-                // 将 DOM 元素本身传进点击事件，防止列表整体重绘导致卡顿
+                item.className = `app-item ${app.selected ? 'selected' : ''}`;
                 item.onclick = function() { toggleApp(index, this); };
-                
                 item.innerHTML = `
                     <div class="app-info">
                         <div class="app-name">${app.name}</div>
@@ -892,16 +610,9 @@
             renderApps(document.getElementById('appSearch').value);
         }
 
-        // ================= 交互逻辑 =================
         function toggleApp(index, element) {
             apps[index].selected = !apps[index].selected;
-            
-            if (apps[index].selected) {
-                element.classList.add('selected');
-            } else {
-                element.classList.remove('selected');
-            }
-            
+            element.classList.toggle('selected', apps[index].selected);
             updateAppStatusUI();
             saveConfig();
         }
@@ -930,7 +641,6 @@
             if (from && to) { rules.push({ from, to }); renderAll(); closeModal(); saveConfig(); } else { alert('请填写完整的魔法词条喵~'); }
         }
 
-        // ================= 启动！ =================
         initAppData();
     </script>
 </body>
