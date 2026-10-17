@@ -1,6 +1,8 @@
 package io.catpaw.kittytalk
 
 import android.accessibilityservice.AccessibilityService
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -67,7 +69,7 @@ class AutomationBridge : AccessibilityService() {
     private var sentenceTrigger = false
     private var shizukuKeepAlive = false
     
-    // 🌟 优化：150ms 是最舒服的延迟，既能等输入法拼音上屏，又不会让人觉得卡顿
+    private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
     private val TEXT_CHANGE_DELAY_MS = 150L 
     private var pendingTextRunnable: Runnable? = null
     private val CONTENT_CHANGE_DELAY_MS = 150L
@@ -93,6 +95,7 @@ class AutomationBridge : AccessibilityService() {
     
     private var lastPasteLike = false
     private var tailPending = false
+    private var substringHitForRun = false
     private val mainHandler = Handler(Looper.getMainLooper())
     private var textChangeCount = 0
     private var lastEventPkg = ""
@@ -174,6 +177,8 @@ class AutomationBridge : AccessibilityService() {
         lastEventPkg = pkg
         if (pkg == packageName) return
         if (isInputMethodPackage(pkg)) return
+        
+        // 🌟 核心修改：严格检查白名单，移除一切后门特权！
         if (!isSupportedPackage(pkg)) return
         
         isQQ = pkg.startsWith(PKG_MOBILEQQ) || pkg == PKG_QQ || pkg == PKG_TIM
@@ -250,9 +255,11 @@ class AutomationBridge : AccessibilityService() {
         pendingContentRunnable?.let { mainHandler.removeCallbacks(it); pendingContentRunnable = null }
     }
 
-    private fun isSupportedPackage(pkg: String): Boolean =
-        allAppsEnabled || pkg.startsWith(PKG_MOBILEQQ) || pkg == PKG_QQ ||
-            pkg == PKG_TIM || pkg == PKG_WECHAT || whitelist.any { it.pkg == pkg && it.enabled }
+    // 🌟 核心修改：绝对严格的白名单判断！你选谁，谁才生效。
+    private fun isSupportedPackage(pkg: String): Boolean {
+        // 必须是全局生效，或者在这个包名在白名单里且已启用
+        return allAppsEnabled || whitelist.any { it.pkg == pkg && it.enabled }
+    }
 
     private fun isInputMethodPackage(pkg: String?): Boolean {
         if (pkg.isNullOrEmpty()) return false
@@ -300,6 +307,7 @@ class AutomationBridge : AccessibilityService() {
         lastPasteLike = false
         if (processing) return
         processing = true
+        substringHitForRun = false
         processingStart = System.currentTimeMillis()
         mainHandler.postDelayed(watchdogTask, 5000L)
         try {
@@ -340,28 +348,38 @@ class AutomationBridge : AccessibilityService() {
                         return
                     }
 
-                    // 🌟 纯净版：所有应用统一走最原生的 setText，不搞花里胡哨的粘贴
-                    if (setText(inputNode, newText)) {
-                        lastSet = newText
-                        setCursorEnd(inputNode, cursorIndex)
-                        OverlayPrefs.recordWriteSuccess(this, lastEventPkg)
-                        addLog("替换成功: \"${raw.take(10)}\" -> \"${newText.take(10)}\"")
+                    if (isWechat) {
+                        addLog("微信替换连招启动")
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("weaitext", newText)
+                        clipboard.setPrimaryClip(clip)
                         
-                        // 延迟一下确保光标不跳
-                        val fixIndex = cursorIndex
-                        val fixText = newText
-                        mainHandler.postDelayed({
-                            try {
-                                val cur = rootInActiveWindow ?: return@postDelayed
-                                val node = findInputField(cur) ?: return@postDelayed
-                                if (node.text?.toString() == fixText) setCursorEnd(node, fixIndex)
-                                node.recycle()
-                            } catch (_: Exception) { }
-                        }, 100L)
-
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                        
+                        val selectArgs = Bundle()
+                        selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
+                        selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, raw.length)
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectArgs)
+                        
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+                        
+                        lastSet = newText
+                        
                     } else {
-                        OverlayPrefs.resetWriteSuccessCount(this, lastEventPkg)
-                        addLog("原生写入失败，放弃当前替换")
+                        if (setText(inputNode, newText)) {
+                            lastSet = newText
+                            setCursorEnd(inputNode, cursorIndex)
+                            OverlayPrefs.recordWriteSuccess(this, lastEventPkg)
+                            addLog("替换成功")
+                        } else {
+                            OverlayPrefs.resetWriteSuccessCount(this, lastEventPkg)
+                            if (OverlayPrefs.isNoPopupPackage(this, lastEventPkg) || OverlayPrefs.isInCooldown(this) || OverlayInput.isCollapsed()) {
+                                addLog("写入失败")
+                            } else {
+                                addLog("写入失败，启用悬浮窗")
+                                try { OverlayInput.show(this) } catch (e: Exception) {}
+                            }
+                        }
                     }
                 } finally {
                     inputNode.recycle()
@@ -441,7 +459,10 @@ class AutomationBridge : AccessibilityService() {
         inputFailureCount++
         if (inputFailureCount >= 1) {
             inputFailureCount = 0
-            // 纯净版不弹悬浮窗，直接静默
+            if (OverlayPrefs.isNoPopupPackage(this, lastEventPkg) || OverlayPrefs.isInCooldown(this) || OverlayInput.isCollapsed()) {
+            } else {
+                try { OverlayInput.show(this) } catch (e: Exception) {}
+            }
         }
     }
 
@@ -487,6 +508,11 @@ class AutomationBridge : AccessibilityService() {
             }
         }
 
+        if (isWechat) {
+            val wxNode = findWechatInput(root)
+            if (wxNode != null) return wxNode
+        }
+
         findFocusedEditable(root)?.let { return it }
         findEditable(root)?.let { return it }
         findEditTextByClassName(root)?.let { return it }
@@ -497,6 +523,21 @@ class AutomationBridge : AccessibilityService() {
             focus?.recycle()
             null
         }
+    }
+
+    private fun findWechatInput(root: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (root == null) return null
+        val cls = root.className?.toString() ?: ""
+        if (cls.contains("EditText") && root.isFocused) {
+            return AccessibilityNodeInfo.obtain(root)
+        }
+        for (i in 0 until root.childCount) {
+            val child = root.getChild(i) ?: continue
+            val found = findWechatInput(child)
+            child.recycle()
+            if (found != null) return found
+        }
+        return null
     }
 
     private fun findFocusedEditable(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
