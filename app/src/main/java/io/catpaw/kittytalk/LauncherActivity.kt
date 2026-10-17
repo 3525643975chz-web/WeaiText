@@ -130,14 +130,10 @@ class LauncherActivity : AppCompatActivity() {
         lastThemeVersion = themeCfg.version
         cfg = SettingsRepository.load(this)
 
-        // 🌟 修复：每次打开软件，自动启动保活服务（如果你在网页开了“隐藏后台”，它会自动隐藏通知）
+        // 🌟 修复闪退：使用普通 startService 启动，避免 Android 12+ 的强限制导致崩溃
         try {
             val intent = Intent(this, LifelineService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            } else {
-                startService(intent)
-            }
+            startService(intent)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -176,11 +172,8 @@ class LauncherActivity : AppCompatActivity() {
         fun setBackgroundMode(enabled: Boolean) {
             darkPrefs().edit().putBoolean("bg_mode_hide", enabled).apply()
             val intent = Intent(this@LauncherActivity, LifelineService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            } else {
-                startService(intent)
-            }
+            // 🌟 修复闪退：同样降级为普通 startService
+            startService(intent)
         }
 
         @JavascriptInterface
