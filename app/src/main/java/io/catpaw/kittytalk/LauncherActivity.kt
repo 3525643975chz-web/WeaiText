@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.color.DynamicColors
 import io.catpaw.kittytalk.data.* // 导入数据库相关的类
 import io.catpaw.kittytalk.databinding.ActivityMainBinding
+import org.json.JSONArray
 import org.json.JSONObject
 import rikka.shizuku.Shizuku
 import java.lang.Exception
@@ -165,9 +166,6 @@ class LauncherActivity : AppCompatActivity() {
         setupVersionBadge()
         updateServiceStatus()
         updateThemeStatus()
-
-        // 取消原版弹窗
-        // maybeShowFirstWarning()
     }
 
     // 4. 写给网页调用的桥接类
@@ -204,10 +202,31 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
 
+        // 🌟 新增：获取手机上真实安装的应用（排除系统应用）
+        @JavascriptInterface
+        fun getInstalledApps(): String {
+            val pm = packageManager
+            // 获取所有应用列表
+            val packages = pm.getInstalledApplications(0)
+            val jsonArray = JSONArray()
+            
+            for (pkg in packages) {
+                // 过滤掉系统应用（只保留用户自己下载安装的）
+                if ((pkg.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) {
+                    try {
+                        val obj = JSONObject()
+                        obj.put("name", pm.getApplicationLabel(pkg).toString())
+                        obj.put("pkg", pkg.packageName)
+                        jsonArray.put(obj)
+                    } catch (e: Exception) {}
+                }
+            }
+            return jsonArray.toString()
+        }
+
         // ✅ 终极核心：将网页传过来的 JSON 解析并注入 Room 数据库！
         @JavascriptInterface
         fun saveConfig(json: String) {
-            // 数据库操作推荐在子线程，避免卡顿网页
             Thread {
                 try {
                     val root = JSONObject(json)
@@ -217,7 +236,7 @@ class LauncherActivity : AppCompatActivity() {
                     val enabled = root.optBoolean("enabled", true)
                     darkPrefs().edit().putBoolean(funcKey, enabled).apply()
 
-                    // 2. 构造分类（原版需要至少一个分类才能存规则）
+                    // 2. 构造分类
                     val defaultCid = 1L
                     val categories = listOf(CategoryEntity(cid = defaultCid, name = "网页配置", active = 1))
 
@@ -232,9 +251,9 @@ class LauncherActivity : AppCompatActivity() {
                                     cid = defaultCid,
                                     trigger = ruleObj.optString("from"),
                                     replacement = ruleObj.optString("to"),
-                                    active = 1, // 启用
-                                    whole = 0,  // 0代表子串匹配（非整句）
-                                    exclude = 0, // 不排除
+                                    active = 1,
+                                    whole = 0,
+                                    exclude = 0,
                                     seq = i
                                 )
                             )
@@ -258,7 +277,7 @@ class LauncherActivity : AppCompatActivity() {
                         }
                     }
 
-                    // 写入数据库（替换旧数据）
+                    // 写入数据库
                     dao.replaceCategories(categories, rulesList, suffixesList)
 
                     // 5. 解析生效应用白名单
@@ -282,9 +301,8 @@ class LauncherActivity : AppCompatActivity() {
                     // 6. 通知后台核心服务重新读取配置！
                     AutomationBridge.instance?.reload()
 
-                    runOnUiThread {
-                        toast("网页配置已同步生效！")
-                    }
+                    // ❌ 已删掉 Toast 提示，让网页静默保存
+                    
                 } catch (e: Exception) {
                     e.printStackTrace()
                     runOnUiThread {
@@ -296,8 +314,6 @@ class LauncherActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun loadConfig(): String {
-            // 网页如果向原生要配置，可以在这里从数据库读出来返回。
-            // 目前网页有 localStorage，不需要原生的数据也能恢复状态，所以先返回空。
             return "" 
         }
     }
