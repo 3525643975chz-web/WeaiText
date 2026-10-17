@@ -71,9 +71,9 @@ class LauncherActivity : AppCompatActivity() {
         AppCompatDelegate.setDefaultNightMode(PaletteStore.appcompatNightMode(themeCfg.themeMode))
         setTheme(PaletteStore.themeStyleRes(themeCfg.palette))
         
-        super.onCreate(savedInstanceState) // 必须先初始化，否则获取 window 会闪退
+        super.onCreate(savedInstanceState) 
         
-        // 初始化后再设置背景透明
+        // 设置窗口透明
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         if (themeCfg.palette == Palette.SYSTEM) {
@@ -85,10 +85,8 @@ class LauncherActivity : AppCompatActivity() {
         
         // 强制 WebView 渲染层透明
         webView.setBackgroundColor(Color.TRANSPARENT) 
-        webView.setLayerType(WebView.LAYER_TYPE_HARDWARE, null)
-        
-        // 🌟 核心：让整个网页先透明，加载完后平滑淡入
-        webView.alpha = 0f
+        // 关闭硬件加速（部分机型开启硬件加速会导致透明背景黑屏）
+        webView.setLayerType(WebView.LAYER_TYPE_SOFTWARE, null) 
         
         val settings = webView.settings
         settings.javaScriptEnabled = true
@@ -101,16 +99,11 @@ class LauncherActivity : AppCompatActivity() {
         
         setContentView(webView)
 
-        // 延迟300毫秒后开始淡入（配合 HTML 的动画，完美衔接）
-        webView.postDelayed({
-            webView.animate()
-                .alpha(1f)
-                .setDuration(600)
-                .setStartDelay(100)
-                .start()
-        }, 300)
+        // 注意：这里把涉及 binding.bottomNav 的代码删掉了，避免空指针闪退！
+        // 直接设置状态栏和导航栏透明
+        window.navigationBarColor = Color.TRANSPARENT
+        window.statusBarColor = Color.TRANSPARENT
 
-        applySystemBarInsets()
         lastThemeVersion = themeCfg.version
         cfg = SettingsRepository.load(this)
 
@@ -302,16 +295,6 @@ class LauncherActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val controller = WindowInsetsControllerCompat(window, window.decorView)
         controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-    }
-
-    internal fun applySystemBarInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNav) { v, insets ->
-            val bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
-            v.setPadding(0, 0, 0, bottom)
-            insets
-        }
-        window.navigationBarColor = Color.TRANSPARENT
-        window.statusBarColor = Color.TRANSPARENT
     }
 
     internal fun darkPrefs() = getSharedPreferences("qq_settings", Context.MODE_PRIVATE)
