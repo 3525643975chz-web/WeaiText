@@ -70,9 +70,11 @@ class AutomationBridge : AccessibilityService() {
     private var shizukuKeepAlive = false
     
     private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
-    private val TEXT_CHANGE_DELAY_MS = 150L 
+    
+    // 🌟 优化1：防抖延迟加大到 250ms，给输入法留出上屏（拼音转汉字）的时间
+    private val TEXT_CHANGE_DELAY_MS = 250L 
     private var pendingTextRunnable: Runnable? = null
-    private val CONTENT_CHANGE_DELAY_MS = 150L
+    private val CONTENT_CHANGE_DELAY_MS = 250L
     private var pendingContentRunnable: Runnable? = null
     
     private var verifyPending = false
@@ -345,20 +347,26 @@ class AutomationBridge : AccessibilityService() {
                     }
 
                     if (isWechat) {
-                        // 🌟 微信无感替换最终杀招：全选+强塞剪贴板，不弹悬浮窗！
+                        // 🌟 优化2：微信专属清空+全选粘贴大法
                         addLog("微信替换连招启动")
                         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("weaitext", newText)
                         clipboard.setPrimaryClip(clip)
                         
-                        // 1. 强制获取焦点
                         inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                        // 2. 全选 (删除了错误的 ACTION_SELECT_ALL)
+                        
+                        // 清空输入框（有时候微信必须清空才能塞进去）
+                        val clearArgs = Bundle()
+                        clearArgs.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "")
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, clearArgs)
+                        
+                        // 强制全选旧文本（防止叠加）
                         val selectArgs = Bundle()
                         selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
                         selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, raw.length)
                         inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectArgs)
-                        // 3. 粘贴
+                        
+                        // 粘贴
                         inputNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
                         
                         lastSet = newText
