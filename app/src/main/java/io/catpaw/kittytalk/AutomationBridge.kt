@@ -1,8 +1,6 @@
 package io.catpaw.kittytalk
 
 import android.accessibilityservice.AccessibilityService
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -69,12 +67,10 @@ class AutomationBridge : AccessibilityService() {
     private var sentenceTrigger = false
     private var shizukuKeepAlive = false
     
-    private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
-    
-    // 加大防抖延迟到 400ms，给输入法上屏的时间
-    private val TEXT_CHANGE_DELAY_MS = 400L 
+    // 🌟 优化：150ms 是最舒服的延迟，既能等输入法拼音上屏，又不会让人觉得卡顿
+    private val TEXT_CHANGE_DELAY_MS = 150L 
     private var pendingTextRunnable: Runnable? = null
-    private val CONTENT_CHANGE_DELAY_MS = 400L
+    private val CONTENT_CHANGE_DELAY_MS = 150L
     private var pendingContentRunnable: Runnable? = null
     
     private var verifyPending = false
@@ -97,7 +93,6 @@ class AutomationBridge : AccessibilityService() {
     
     private var lastPasteLike = false
     private var tailPending = false
-    private var substringHitForRun = false
     private val mainHandler = Handler(Looper.getMainLooper())
     private var textChangeCount = 0
     private var lastEventPkg = ""
@@ -305,7 +300,6 @@ class AutomationBridge : AccessibilityService() {
         lastPasteLike = false
         if (processing) return
         processing = true
-        substringHitForRun = false
         processingStart = System.currentTimeMillis()
         mainHandler.postDelayed(watchdogTask, 5000L)
         try {
@@ -346,52 +340,28 @@ class AutomationBridge : AccessibilityService() {
                         return
                     }
 
-                    if (isWechat) {
-                        // 🌟 终极无痛方案：绝不主动清空，全选后延迟粘贴！
-                        addLog("微信执行全选延时覆盖")
-                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("weaitext", newText)
-                        clipboard.setPrimaryClip(clip)
+                    // 🌟 纯净版：所有应用统一走最原生的 setText，不搞花里胡哨的粘贴
+                    if (setText(inputNode, newText)) {
+                        lastSet = newText
+                        setCursorEnd(inputNode, cursorIndex)
+                        OverlayPrefs.recordWriteSuccess(this, lastEventPkg)
+                        addLog("替换成功: \"${raw.take(10)}\" -> \"${newText.take(10)}\"")
                         
-                        inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                        
-                        // 全选原文本
-                        val selectArgs = Bundle()
-                        selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
-                        selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, raw.length)
-                        inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectArgs)
-                        
-                        // 延迟 100ms 再粘贴，绝对不阻塞主线程
+                        // 延迟一下确保光标不跳
+                        val fixIndex = cursorIndex
+                        val fixText = newText
                         mainHandler.postDelayed({
                             try {
-                                val curRoot = rootInActiveWindow
-                                val curInput = findInputField(curRoot)
-                                if (curInput != null) {
-                                    curInput.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-                                    curInput.recycle()
-                                }
-                                curRoot?.recycle()
-                            } catch (_: Exception) {}
-                        }, 100)
-                        
-                        lastSet = newText
-                        
+                                val cur = rootInActiveWindow ?: return@postDelayed
+                                val node = findInputField(cur) ?: return@postDelayed
+                                if (node.text?.toString() == fixText) setCursorEnd(node, fixIndex)
+                                node.recycle()
+                            } catch (_: Exception) { }
+                        }, 100L)
+
                     } else {
-                        // 其他应用正常写入
-                        if (setText(inputNode, newText)) {
-                            lastSet = newText
-                            setCursorEnd(inputNode, cursorIndex)
-                            OverlayPrefs.recordWriteSuccess(this, lastEventPkg)
-                            addLog("替换成功")
-                        } else {
-                            OverlayPrefs.resetWriteSuccessCount(this, lastEventPkg)
-                            if (OverlayPrefs.isNoPopupPackage(this, lastEventPkg) || OverlayPrefs.isInCooldown(this) || OverlayInput.isCollapsed()) {
-                                addLog("写入失败")
-                            } else {
-                                addLog("写入失败，启用悬浮窗")
-                                try { OverlayInput.show(this) } catch (e: Exception) {}
-                            }
-                        }
+                        OverlayPrefs.resetWriteSuccessCount(this, lastEventPkg)
+                        addLog("原生写入失败，放弃当前替换")
                     }
                 } finally {
                     inputNode.recycle()
@@ -471,10 +441,7 @@ class AutomationBridge : AccessibilityService() {
         inputFailureCount++
         if (inputFailureCount >= 1) {
             inputFailureCount = 0
-            if (OverlayPrefs.isNoPopupPackage(this, lastEventPkg) || OverlayPrefs.isInCooldown(this) || OverlayInput.isCollapsed()) {
-            } else {
-                try { OverlayInput.show(this) } catch (e: Exception) {}
-            }
+            // 纯净版不弹悬浮窗，直接静默
         }
     }
 
@@ -520,11 +487,6 @@ class AutomationBridge : AccessibilityService() {
             }
         }
 
-        if (isWechat) {
-            val wxNode = findWechatInput(root)
-            if (wxNode != null) return wxNode
-        }
-
         findFocusedEditable(root)?.let { return it }
         findEditable(root)?.let { return it }
         findEditTextByClassName(root)?.let { return it }
@@ -535,21 +497,6 @@ class AutomationBridge : AccessibilityService() {
             focus?.recycle()
             null
         }
-    }
-
-    private fun findWechatInput(root: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
-        if (root == null) return null
-        val cls = root.className?.toString() ?: ""
-        if (cls.contains("EditText") && root.isFocused) {
-            return AccessibilityNodeInfo.obtain(root)
-        }
-        for (i in 0 until root.childCount) {
-            val child = root.getChild(i) ?: continue
-            val found = findWechatInput(child)
-            child.recycle()
-            if (found != null) return found
-        }
-        return null
     }
 
     private fun findFocusedEditable(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
