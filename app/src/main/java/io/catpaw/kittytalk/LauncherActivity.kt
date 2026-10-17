@@ -33,10 +33,40 @@ class LauncherActivity : AppCompatActivity() {
     internal lateinit var binding: ActivityMainBinding
     internal lateinit var cfg: SettingsRepository.Config
 
-    internal val funcKey = "func_enabled"
-    internal val prefCurrentTab = "current_tab"
-
+    // ================= 补全原版遗留的空壳变量，防止 RulesTab 等文件报错 =================
+    internal val maxVisible = 3
+    internal var suffixesExpanded = false
+    internal var rulesExpanded = false
+    internal var wholeRulesExpanded = false
+    internal var exportTarget: List<Category>? = null
+    internal var logFollowBottom = true
+    internal var logProgrammaticScroll = false
+    internal var thanksClickCount = 0
+    internal var lastThanksClick = 0L
     internal var lastThemeVersion = -1
+    
+    // 空壳监听器和 Launcher
+    internal val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
+        override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) { }
+    }
+    internal val shizukuBinderListener = Shizuku.OnBinderReceivedListener { }
+
+    internal val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { }
+    internal val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { }
+    internal val themeLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
+
+    // 变量 key 补全
+    internal val funcKey = "func_enabled"
+    internal val punctKey = "punctuation_trigger"
+    internal val punctEatPeriodKey = "punct_eat_period"
+    internal val sentenceBlockKey = "sentence_block_chars"
+    internal val sentenceTriggerKey = "sentence_trigger"
+    internal val atSkipKey = "at_skip"
+    internal val shizukuKey = "shizuku_keepalive"
+    internal val prefWarningVersion = "warning_version"
+    internal val prefLogVisible = "log_visible"
+    internal val prefCurrentTab = "current_tab"
+    // ==============================================================================
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val themeCfg = PaletteStore.load(this)
@@ -66,7 +96,6 @@ class LauncherActivity : AppCompatActivity() {
         lastThemeVersion = themeCfg.version
         cfg = SettingsRepository.load(this)
 
-        // 🌟 申请通知权限（Android 13+），防止挂前台服务闪退
         requestNotificationPermissionIfNeeded()
     }
 
@@ -86,7 +115,6 @@ class LauncherActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 1001) {
-            // 启动后台服务，挂上通知保活
             LifelineService.start(this)
         }
     }
@@ -94,11 +122,9 @@ class LauncherActivity : AppCompatActivity() {
     // 🌟 核心：监听按 Home 键
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        // 如果开启了“魔法后台消除”开关，主动自杀并从多任务列表消失
         if (darkPrefs().getBoolean("bg_mode_hide", false)) {
             finishAndRemoveTask()
         }
-        // 没开开关的话，什么都不做，系统因为有前台通知，会稳稳留住它
     }
 
     inner class WebBridge {
@@ -222,7 +248,7 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    // ----- 防止原代码报错的空壳 -----
+    // ----- 防止原代码报错的空壳方法 -----
     internal fun updateThemeStatus() {}
     internal fun updateServiceStatus() {}
     internal fun showTab(menuId: Int) {}
