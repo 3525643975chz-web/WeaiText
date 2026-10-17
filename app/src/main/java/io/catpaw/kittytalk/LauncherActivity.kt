@@ -3,7 +3,11 @@ package io.catpaw.kittytalk
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -17,31 +21,20 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.catpaw.kittytalk.databinding.ActivityMainBinding
 import rikka.shizuku.Shizuku
 
-/**
- * 主 Activity：仅负责生命周期、共享状态、页签切换。
- * 各 Tab 的 UI 逻辑已拆分到 tabs/ 目录下的扩展函数文件：
- *  - HomeTab.kt     主页（服务状态、功能开关、标点/分句触发、Shizuku 保活）
- *  - RulesTab.kt    替换规则（分类、子串/整句规则、句尾附加、导入导出）
- *  - WhitelistTab.kt 白名单（应用白名单管理、应用选择器）
- *  - LogsTab.kt     日志（日志显示、刷新、滚动跟随）
- *  - SettingsTab.kt 设置（版权、修复记录、电池、悬浮窗、彩蛋）
- */
 class LauncherActivity : AppCompatActivity() {
 
     internal lateinit var binding: ActivityMainBinding
     internal lateinit var cfg: SettingsRepository.Config
 
-    // 列表默认显示条数
     internal val maxVisible = 3
     internal var suffixesExpanded = false
     internal var rulesExpanded = false
     internal var wholeRulesExpanded = false
 
-    // 导出：写文本文件（仅导出用户勾选的分类）
     internal var exportTarget: List<Category>? = null
     internal val exportLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("text/plain")
-    ) { uri: android.net.Uri? ->
+    ) { uri: Uri? ->
         if (uri != null) {
             try {
                 contentResolver.openOutputStream(uri)?.use {
@@ -56,10 +49,9 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    // 导入：读文本文件
     internal val importLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
-    ) { uri: android.net.Uri? ->
+    ) { uri: Uri? ->
         if (uri != null) {
             try {
                 val text = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
@@ -75,7 +67,6 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    // 主题页：返回后 recreate 以应用新主题
     internal val themeLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -84,7 +75,6 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    // ----------  pref key（各 Tab 共享） ----------
     internal val funcKey = "func_enabled"
     internal val punctKey = "punctuation_trigger"
     internal val punctEatPeriodKey = "punct_eat_period"
@@ -96,7 +86,6 @@ class LauncherActivity : AppCompatActivity() {
     internal val prefLogVisible = "log_visible"
     internal val prefCurrentTab = "current_tab"
 
-    // ---------- Shizuku 监听器（HomeTab 使用） ----------
     internal val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
         override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
             if (requestCode == PrivilegeBridge.REQUEST_CODE) {
@@ -108,11 +97,9 @@ class LauncherActivity : AppCompatActivity() {
         runOnUiThread { refreshShizukuStatus() }
     }
 
-    // ---------- 日志跟随状态（LogsTab 使用） ----------
     internal var logFollowBottom = true
     internal var logProgrammaticScroll = false
 
-    // ---------- 彩蛋计数（SettingsTab 使用） ----------
     internal var thanksClickCount = 0
     internal var lastThanksClick = 0L
 
@@ -127,13 +114,37 @@ class LauncherActivity : AppCompatActivity() {
             DynamicColors.applyToActivityIfAvailable(this)
         }
         setupEdgeToEdge()
+        
+        // 1. 依然初始化原生 binding，防止其他文件报错
         binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        
+        // ==========================================
+        // 2. 核心改动：将原生界面替换为你的 WebView
+        // ==========================================
+        val webView = WebView(this)
+        val settings = webView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.allowFileAccess = true
+        settings.allowContentAccess = true
+        
+        // 注入桥接，让网页可以调用 Android 原生功能
+        webView.addJavascriptInterface(WebBridge(), "AndroidBridge")
+        
+        // 加载你的 HTML 页面
+        webView.loadUrl("file:///android_asset/index.html")
+        
+        // 显示网页
+        setContentView(webView)
+        // ==========================================
+
         applySystemBarInsets()
 
         lastThemeVersion = themeCfg.version
 
         cfg = SettingsRepository.load(this)
+        
+        // 3. 保持原版的各种初始化（虽然不显示了，但后台服务依然在运转）
         setupBottomNav()
         setupServiceCard()
         setupFuncSwitch()
@@ -153,16 +164,64 @@ class LauncherActivity : AppCompatActivity() {
         updateServiceStatus()
         updateThemeStatus()
 
-        val savedTab = darkPrefs().getInt(prefCurrentTab, R.id.nav_home)
-        val logItem = binding.bottomNav.menu.findItem(R.id.nav_logs)
-        val restoreTab = if (savedTab == R.id.nav_logs && logItem != null && !logItem.isVisible) {
-            R.id.nav_home
-        } else savedTab
-        showTab(restoreTab)
+        // 原版是通过底部导航栏切换页面的，现在被网页覆盖了，可以不执行
+        // val savedTab = darkPrefs().getInt(prefCurrentTab, R.id.nav_home)
+        // showTab(savedTab)
         maybeShowFirstWarning()
     }
 
-    /** 每次升级到新版本都会弹出一次警告，至少等 5 秒倒计时结束才能关闭 */
+    // 4. 写给网页调用的桥接类
+    inner class WebBridge {
+        @JavascriptInterface
+        fun openBatterySettings() {
+            runOnUiThread {
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                startActivity(intent)
+            }
+        }
+
+        @JavascriptInterface
+        fun openAccessibilitySettings() {
+            runOnUiThread {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                startActivity(intent)
+            }
+        }
+
+        @JavascriptInterface
+        fun openAutoStartSettings() {
+            runOnUiThread {
+                // 跳转自启动设置（不同手机路径不同，这里跳应用详情页作为兜底）
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                intent.data = Uri.parse("package:$packageName")
+                startActivity(intent)
+            }
+        }
+
+        @JavascriptInterface
+        fun openNotificationSettings() {
+            runOnUiThread {
+                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                startActivity(intent)
+            }
+        }
+
+        @JavascriptInterface
+        fun saveConfig(json: String) {
+            // 接收网页传来的配置，目前先用 Toast 提示一下，证明连通了
+            runOnUiThread {
+                toast("成功接收网页配置！")
+            }
+        }
+
+        @JavascriptInterface
+        fun loadConfig(): String {
+            // 后续你需要在这里读取原版的设置并返回给网页
+            return "" 
+        }
+    }
+
     internal fun maybeShowFirstWarning() {
         val version = try {
             packageManager.getPackageInfo(packageName, 0).versionName ?: ""
@@ -226,8 +285,6 @@ class LauncherActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    // ---------- 全面屏 / 系统栏适配 ----------
-
     internal fun setupEdgeToEdge() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val controller = WindowInsetsControllerCompat(window, window.decorView)
@@ -249,8 +306,6 @@ class LauncherActivity : AppCompatActivity() {
         controller.isAppearanceLightStatusBars = !dark
         controller.isAppearanceLightNavigationBars = !dark
     }
-
-    // ---------- 页签 ----------
 
     internal fun setupBottomNav() {
         val item = binding.bottomNav.menu.findItem(R.id.nav_logs)
@@ -286,8 +341,6 @@ class LauncherActivity : AppCompatActivity() {
         if (logs) refreshDebugLog()
         if (settings) refreshDebugLog()
     }
-
-    // ---------- 通用 ----------
 
     internal fun darkPrefs() = getSharedPreferences("qq_settings", Context.MODE_PRIVATE)
 
