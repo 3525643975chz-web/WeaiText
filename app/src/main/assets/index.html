@@ -396,8 +396,8 @@
                 </div>
                 <div class="liquid-glass sub-module" onclick="toggleBackgroundMode()">
                     <div>
-                        <h3>魔法隐身喵~</h3>
-                        <p>魔法消除后台，看不见后台但正常运行哦！</p>
+                        <h3>无痕模式</h3>
+                        <p>退出即隐身，不占用多任务</p>
                     </div>
                     <div class="toggle-sm" id="bgToggle"></div>
                 </div>
@@ -755,7 +755,7 @@ SOFTWARE.</div>
                 window.AndroidBridge.setBackgroundMode(isBackgroundMode);
             }
             saveConfig();
-            showToast(isBackgroundMode ? "魔法隐身已开启" : "魔法隐身已关闭");
+            showToast(isBackgroundMode ? "无痕模式已开启" : "无痕模式已关闭");
         }
 
         function toggleAppendMagic() {
