@@ -24,7 +24,6 @@
         
         html, body { 
             width: 100%; height: 100%; overflow: hidden; 
-            /* 底色与原生 themes.xml 完全一致，绝不突兀 */
             background-color: #FFF0F5; 
             background-image: var(--bg-image);
             background-size: cover;
@@ -50,13 +49,13 @@
         .app-container { 
             width: 100%; max-width: 480px; height: 100%; position: relative; 
             display: flex; flex-direction: column; margin: 0 auto; 
-            /* 恢复淡入动画，配合原生 WebView 的 alpha 过渡 */
+            /* 淡入效果完全交给网页来做 */
             opacity: 0;
-            animation: appBootUp 0.6s ease-out 0.3s forwards;
+            animation: appBootUp 0.8s ease-out forwards;
         }
         @keyframes appBootUp {
-            0% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
         /* ================= 核心：通透白玻璃倒角 ================= */
@@ -396,8 +395,8 @@
                 </div>
                 <div class="liquid-glass sub-module" onclick="toggleBackgroundMode()">
                     <div>
-                        <h3>无痕模式</h3>
-                        <p>退出即隐身，不占用多任务</p>
+                        <h3>魔法隐身</h3>
+                        <p>魔法隐身后台，正常运行只是没有后台</p>
                     </div>
                     <div class="toggle-sm" id="bgToggle"></div>
                 </div>
@@ -755,7 +754,7 @@ SOFTWARE.</div>
                 window.AndroidBridge.setBackgroundMode(isBackgroundMode);
             }
             saveConfig();
-            showToast(isBackgroundMode ? "无痕模式已开启" : "无痕模式已关闭");
+            showToast(isBackgroundMode ? "魔法隐身已开启" : "魔法隐身已关闭");
         }
 
         function toggleAppendMagic() {
