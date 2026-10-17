@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -78,6 +80,10 @@ class LauncherActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         
         val webView = WebView(this)
+        
+        // 🌟 核心修复 1：把 WebView 的背景色设成深色，消除网页加载前的白屏闪烁
+        webView.setBackgroundColor(Color.parseColor("#06080E")) 
+        
         val settings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
@@ -87,6 +93,8 @@ class LauncherActivity : AppCompatActivity() {
         webView.addJavascriptInterface(WebBridge(), "AndroidBridge")
         webView.loadUrl("file:///android_asset/index.html")
         
+        // 🌟 核心修复 2：把 Activity 的底层窗口也设成深色
+        window.setBackgroundDrawable(ColorDrawable(Color.parseColor("#06080E")))
         setContentView(webView)
 
         applySystemBarInsets()
@@ -291,8 +299,8 @@ class LauncherActivity : AppCompatActivity() {
             v.setPadding(0, 0, 0, bottom)
             insets
         }
-        window.navigationBarColor = android.graphics.Color.TRANSPARENT
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        window.statusBarColor = Color.TRANSPARENT
     }
 
     internal fun darkPrefs() = getSharedPreferences("qq_settings", Context.MODE_PRIVATE)
