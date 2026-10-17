@@ -133,14 +133,15 @@ class LauncherActivity : AppCompatActivity() {
         LifelineService.start(this)
     }
 
-    // 🌟 核心功能：监听用户按 Home 键退回桌面
+    // 🌟 核心逻辑：监听用户按 Home 键退回桌面
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        // 如果开启了隐身开关
+        // 如果网页里打开了“多任务隐身”开关
         if (darkPrefs().getBoolean("bg_mode_hide", false)) {
-            // 将自己从多任务列表中移除（卡片消失，但服务还在跑）
+            // 强行结束当前界面，并从多任务列表中移除
             finishAndRemoveTask()
         }
+        // 如果没打开，就什么都不做，系统会正常把 App 留在多任务列表里
     }
 
     inner class WebBridge {
@@ -174,7 +175,7 @@ class LauncherActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun setBackgroundMode(enabled: Boolean) {
-            // 只存状态，不需要其他的了
+            // 网页一点开关，立刻存入本地状态
             darkPrefs().edit().putBoolean("bg_mode_hide", enabled).apply()
         }
 
