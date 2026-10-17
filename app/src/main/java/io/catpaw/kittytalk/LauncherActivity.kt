@@ -33,7 +33,7 @@ class LauncherActivity : AppCompatActivity() {
     internal lateinit var binding: ActivityMainBinding
     internal lateinit var cfg: SettingsRepository.Config
 
-    // ================= 补全原版遗留的空壳变量，防止 RulesTab 等文件报错 =================
+    // ================= 补全原版遗留的空壳变量 =================
     internal val maxVisible = 3
     internal var suffixesExpanded = false
     internal var rulesExpanded = false
@@ -45,7 +45,6 @@ class LauncherActivity : AppCompatActivity() {
     internal var lastThanksClick = 0L
     internal var lastThemeVersion = -1
     
-    // 空壳监听器和 Launcher
     internal val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
         override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) { }
     }
@@ -55,7 +54,6 @@ class LauncherActivity : AppCompatActivity() {
     internal val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { }
     internal val themeLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
 
-    // 变量 key 补全
     internal val funcKey = "func_enabled"
     internal val punctKey = "punctuation_trigger"
     internal val punctEatPeriodKey = "punct_eat_period"
@@ -66,7 +64,6 @@ class LauncherActivity : AppCompatActivity() {
     internal val prefWarningVersion = "warning_version"
     internal val prefLogVisible = "log_visible"
     internal val prefCurrentTab = "current_tab"
-    // ==============================================================================
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val themeCfg = PaletteStore.load(this)
@@ -119,7 +116,7 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    // 🌟 核心：监听按 Home 键
+    // 🌟 核心：监听按 Home 键，如果开了隐身，直接干掉多任务卡片
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         if (darkPrefs().getBoolean("bg_mode_hide", false)) {
