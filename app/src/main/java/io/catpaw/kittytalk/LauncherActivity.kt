@@ -3,7 +3,6 @@ package io.catpaw.kittytalk
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.webkit.JavascriptInterface
@@ -129,14 +128,8 @@ class LauncherActivity : AppCompatActivity() {
         applySystemBarInsets()
         lastThemeVersion = themeCfg.version
         cfg = SettingsRepository.load(this)
-
-        // 🌟 修复闪退：使用普通 startService 启动，避免 Android 12+ 的强限制导致崩溃
-        try {
-            val intent = Intent(this, LifelineService::class.java)
-            startService(intent)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        
+        // 🚨 彻底删除了 LifelineService 的启动代码，保平安！
     }
 
     inner class WebBridge {
@@ -171,9 +164,7 @@ class LauncherActivity : AppCompatActivity() {
         @JavascriptInterface
         fun setBackgroundMode(enabled: Boolean) {
             darkPrefs().edit().putBoolean("bg_mode_hide", enabled).apply()
-            val intent = Intent(this@LauncherActivity, LifelineService::class.java)
-            // 🌟 修复闪退：同样降级为普通 startService
-            startService(intent)
+            // 这里也彻底删除了启动代码
         }
 
         @JavascriptInterface
