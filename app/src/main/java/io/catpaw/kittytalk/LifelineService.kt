@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 
 class LifelineService : Service() {
 
@@ -21,7 +22,7 @@ class LifelineService : Service() {
                     context.startService(intent)
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("LifelineService", "启动服务失败: ${e.message}")
             }
         }
 
@@ -45,8 +46,9 @@ class LifelineService : Service() {
         try {
             val notification = createNotification()
             startForeground(1001, notification)
+            Log.d("LifelineService", "前台服务已成功启动")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("LifelineService", "挂起前台通知失败: ${e.message}")
         }
         return START_STICKY
     }
