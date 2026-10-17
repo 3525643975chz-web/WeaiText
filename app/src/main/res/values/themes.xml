@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 统一的浅色启动底色，配合网页做淡入 -->
+    <!-- 统一的浅色启动底色 -->
     <style name="Theme.QQReplyApp" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">#FFF0F5</item>
         <item name="android:windowDisablePreview">true</item>
