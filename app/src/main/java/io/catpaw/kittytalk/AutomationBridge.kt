@@ -71,7 +71,6 @@ class AutomationBridge : AccessibilityService() {
     
     private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
     
-    // 🌟 微信专属延迟，给微信输入法留出响应时间
     private val TEXT_CHANGE_DELAY_MS = 150L 
     private var pendingTextRunnable: Runnable? = null
     private val CONTENT_CHANGE_DELAY_MS = 150L
@@ -99,11 +98,9 @@ class AutomationBridge : AccessibilityService() {
     private var tailPending = false
     private var substringHitForRun = false
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val random = java.util.Random()
     private var textChangeCount = 0
     private var lastEventPkg = ""
     private var justSwitchedWindow = false
-    private var lastFuncOnState = true
 
     private val syncInputStateTask = Runnable {
         try {
@@ -349,49 +346,35 @@ class AutomationBridge : AccessibilityService() {
                     }
 
                     if (isWechat) {
-                        // 🌟 针对微信的终极暴力破解组合拳
-                        addLog("检测到微信，开始尝试替换...")
-                        var success = false
+                        // 🌟 微信特攻模式
+                        addLog("检测到微信输入框，执行强行注入")
                         
-                        // 1. 强制请求焦点
-                        inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                        
-                        // 2. 尝试原生 setText
-                        success = setText(inputNode, newText)
-                        
-                        // 3. 如果原生失败，尝试剪贴板粘贴
+                        // 1. 先尝试标准的强塞
+                        var success = setText(inputNode, newText)
                         if (!success) {
-                            addLog("微信原生写入失败，尝试粘贴大法")
-                            success = pasteText(inputNode, newText)
-                        }
-                        
-                        // 4. 如果还不行，再等 100ms 抓一次输入框强塞
-                        if (!success) {
-                            mainHandler.postDelayed({
-                                try {
-                                    val curRoot = rootInActiveWindow
-                                    val curInput = findInputField(curRoot)
-                                    if (curInput != null) {
-                                        pasteText(curInput, newText)
-                                        curInput.recycle()
-                                    }
-                                    curRoot?.recycle()
-                                } catch (_: Exception) {}
-                            }, 100)
-                            success = true 
+                            // 2. 失败则走剪贴板全选粘贴
+                            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("weaitext", newText)
+                            clipboard.setPrimaryClip(clip)
+                            
+                            inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                            
+                            val selectArgs = Bundle()
+                            selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
+                            selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, raw.length) // 全选旧文本
+                            inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectArgs)
+                            
+                            success = inputNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
                         }
                         
                         if (success) {
                             lastSet = newText
                             setCursorEnd(inputNode, cursorIndex)
-                            addLog("微信替换指令已发送！")
-                            // 为了让你知道底层生效了，弹个Toast
-                            Toast.makeText(this@AutomationBridge, "微信替换已触发", Toast.LENGTH_SHORT).show()
+                            addLog("微信替换成功！")
                         } else {
-                            addLog("微信彻底拦截，启用悬浮窗备用输入")
-                            Toast.makeText(this@AutomationBridge, "微信拦截了写入，请使用悬浮窗", Toast.LENGTH_SHORT).show()
-                            try { OverlayInput.show(this) } catch (e: Exception) {}
+                            addLog("微信拦截了替换")
                         }
+                        
                     } else {
                         // 其他应用正常写入
                         if (setText(inputNode, newText)) {
@@ -418,33 +401,6 @@ class AutomationBridge : AccessibilityService() {
         } finally {
             processing = false
             mainHandler.removeCallbacks(watchdogTask)
-        }
-    }
-
-    private fun pasteText(node: AccessibilityNodeInfo, text: String): Boolean {
-        try {
-            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val originalClip = clipboard.primaryClip
-            val clip = ClipData.newPlainText("weaitext", text)
-            clipboard.setPrimaryClip(clip)
-            
-            // 微信必须强制全选，否则粘贴不进去
-            node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-            val selectArgs = Bundle()
-            selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
-            selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, text.length)
-            node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectArgs)
-            
-            val pasteSuccess = node.performAction(AccessibilityNodeInfo.ACTION_PASTE)
-            
-            if (originalClip != null) {
-                mainHandler.postDelayed({
-                    try { clipboard.setPrimaryClip(originalClip) } catch (_: Exception) {}
-                }, 200L)
-            }
-            return pasteSuccess
-        } catch (e: Exception) {
-            return false
         }
     }
 
@@ -563,29 +519,10 @@ class AutomationBridge : AccessibilityService() {
             }
         }
 
-        // 🌟 针对微信的专属 ID 查找
+        // 🌟 针对微信的专属节点暴力全树查找
         if (isWechat) {
-            val wxIds = listOf(
-                "com.tencent.mm:id/chatting_edit",
-                "com.tencent.mm:id/chatting_et",
-                "com.tencent.mm:id/bkk",
-                "com.tencent.mm:id/a0s",
-                "com.tencent.mm:id/input"
-            )
-            for (id in wxIds) {
-                try {
-                    val nodes = root.findAccessibilityNodeInfosByViewId(id)
-                    if (!nodes.isNullOrEmpty()) {
-                        for (n in nodes) {
-                            try {
-                                if (n.isEditable || n.className?.toString()?.contains("EditText") == true) {
-                                    return AccessibilityNodeInfo.obtain(n)
-                                }
-                            } finally { n.recycle() }
-                        }
-                    }
-                } catch (_: Exception) {}
-            }
+            val wxNode = findWechatInput(root)
+            if (wxNode != null) return wxNode
         }
 
         findFocusedEditable(root)?.let { return it }
@@ -598,6 +535,23 @@ class AutomationBridge : AccessibilityService() {
             focus?.recycle()
             null
         }
+    }
+
+    // 微信专属查找逻辑
+    private fun findWechatInput(root: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (root == null) return null
+        // 只要是个 EditText 并且是可用的，就抓过来
+        val cls = root.className?.toString() ?: ""
+        if (cls.contains("EditText") && root.isFocused) {
+            return AccessibilityNodeInfo.obtain(root)
+        }
+        for (i in 0 until root.childCount) {
+            val child = root.getChild(i) ?: continue
+            val found = findWechatInput(child)
+            child.recycle()
+            if (found != null) return found
+        }
+        return null
     }
 
     private fun findFocusedEditable(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
