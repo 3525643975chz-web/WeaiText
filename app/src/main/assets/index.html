@@ -170,7 +170,7 @@
                     <div class="toggle-switch on" id="mainToggle" onclick="toggleMainSwitch()"></div>
                 </div>
 
-                <!-- 🌟 完美文案：魔法后台消除 -->
+                <!-- 魔法后台消除开关 -->
                 <div class="switch-card glass">
                     <div class="switch-info">
                         <h2>魔法后台消除</h2>
@@ -429,7 +429,21 @@
                 ];
             }
 
-            loadConfig();
+            // 读取本地配置
+            const hasConfig = loadConfig();
+            
+            // 🌟 核心：如果没有历史配置（首次打开），自动注入那 5 条经典规则
+            if (!hasConfig) {
+                rules = [
+                    { from: '我', to: '本喵' }, 
+                    { from: '你', to: '杂鱼' }, 
+                    { from: '他', to: '喵桑' }, 
+                    { from: '她', to: '喵酱' }, 
+                    { from: '宝宝', to: '蠢鱼' }
+                ];
+                saveConfig(); 
+            }
+            
             renderAll();
             updateAppendUI();
         }
@@ -518,7 +532,8 @@
             if (window.AndroidBridge && window.AndroidBridge.loadConfig) raw = window.AndroidBridge.loadConfig();
             if (!raw) { try { raw = localStorage.getItem('weaitext_cfg') || ''; } catch(e) {} }
             
-            if (!raw) return;
+            if (!raw) return false; 
+            
             try {
                 const cfg = JSON.parse(raw);
                 if (typeof cfg.enabled === 'boolean') isModuleActive = cfg.enabled;
@@ -535,7 +550,11 @@
                 }
                 if (Array.isArray(cfg.rules) && cfg.rules.length) rules = cfg.rules;
                 if (cfg.appendMagic) appendMagic = cfg.appendMagic;
-            } catch(e) { console.error("解析配置失败", e); }
+                return true; 
+            } catch(e) { 
+                console.error("解析配置失败", e); 
+                return false;
+            }
         }
 
         function openBatterySettings() { if (window.AndroidBridge && window.AndroidBridge.openBatterySettings) window.AndroidBridge.openBatterySettings(); }
