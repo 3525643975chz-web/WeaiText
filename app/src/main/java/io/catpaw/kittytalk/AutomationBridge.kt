@@ -70,9 +70,11 @@ class AutomationBridge : AccessibilityService() {
     private var shizukuKeepAlive = false
     
     private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
-    private val TEXT_CHANGE_DELAY_MS = 120L
+    
+    // 🌟 微信专属延迟，给微信输入法留出响应时间
+    private val TEXT_CHANGE_DELAY_MS = 150L 
     private var pendingTextRunnable: Runnable? = null
-    private val CONTENT_CHANGE_DELAY_MS = 120L
+    private val CONTENT_CHANGE_DELAY_MS = 150L
     private var pendingContentRunnable: Runnable? = null
     
     private var verifyPending = false
@@ -142,7 +144,6 @@ class AutomationBridge : AccessibilityService() {
         } catch (e: Throwable) {}
     }
 
-    // 🌟 补全这个方法，防止 TilePanelActivity 报错
     fun setFuncEnabled(enabled: Boolean) {
         funcEnabled = enabled
     }
@@ -348,10 +349,23 @@ class AutomationBridge : AccessibilityService() {
                     }
 
                     if (isWechat) {
-                        var success = setText(inputNode, newText)
+                        // 🌟 针对微信的终极暴力破解组合拳
+                        addLog("检测到微信，开始尝试替换...")
+                        var success = false
+                        
+                        // 1. 强制请求焦点
+                        inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                        
+                        // 2. 尝试原生 setText
+                        success = setText(inputNode, newText)
+                        
+                        // 3. 如果原生失败，尝试剪贴板粘贴
                         if (!success) {
+                            addLog("微信原生写入失败，尝试粘贴大法")
                             success = pasteText(inputNode, newText)
                         }
+                        
+                        // 4. 如果还不行，再等 100ms 抓一次输入框强塞
                         if (!success) {
                             mainHandler.postDelayed({
                                 try {
@@ -371,25 +385,20 @@ class AutomationBridge : AccessibilityService() {
                             lastSet = newText
                             setCursorEnd(inputNode, cursorIndex)
                             addLog("微信替换指令已发送！")
+                            // 为了让你知道底层生效了，弹个Toast
+                            Toast.makeText(this@AutomationBridge, "微信替换已触发", Toast.LENGTH_SHORT).show()
+                        } else {
+                            addLog("微信彻底拦截，启用悬浮窗备用输入")
+                            Toast.makeText(this@AutomationBridge, "微信拦截了写入，请使用悬浮窗", Toast.LENGTH_SHORT).show()
+                            try { OverlayInput.show(this) } catch (e: Exception) {}
                         }
                     } else {
+                        // 其他应用正常写入
                         if (setText(inputNode, newText)) {
                             lastSet = newText
                             setCursorEnd(inputNode, cursorIndex)
-                            val autoAdded = OverlayPrefs.recordWriteSuccess(this, lastEventPkg)
+                            OverlayPrefs.recordWriteSuccess(this, lastEventPkg)
                             addLog("替换成功：\"${raw.take(20)}\" -> \"${newText.take(20)}\"")
-                            scheduleWriteVerify(newText)
-                            
-                            val fixIndex = cursorIndex
-                            val fixText = newText
-                            mainHandler.postDelayed({
-                                try {
-                                    val cur = rootInActiveWindow ?: return@postDelayed
-                                    val node = findInputField(cur) ?: return@postDelayed
-                                    if (node.text?.toString() == fixText) setCursorEnd(node, fixIndex)
-                                    node.recycle()
-                                } catch (_: Exception) { }
-                            }, 250L)
                         } else {
                             OverlayPrefs.resetWriteSuccessCount(this, lastEventPkg)
                             if (OverlayPrefs.isNoPopupPackage(this, lastEventPkg) || OverlayPrefs.isInCooldown(this) || OverlayInput.isCollapsed()) {
@@ -419,6 +428,7 @@ class AutomationBridge : AccessibilityService() {
             val clip = ClipData.newPlainText("weaitext", text)
             clipboard.setPrimaryClip(clip)
             
+            // 微信必须强制全选，否则粘贴不进去
             node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
             val selectArgs = Bundle()
             selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
@@ -521,34 +531,6 @@ class AutomationBridge : AccessibilityService() {
         }
     }
 
-    private fun scheduleWriteVerify(expected: String) {
-        try {
-            verifyPending = true
-            val r = Runnable {
-                if (!verifyPending) return@Runnable
-                verifyPending = false
-                try {
-                    val root = rootInActiveWindow ?: return@Runnable
-                    val n = findInputField(root)
-                    if (n == null) {
-                        root.recycle()
-                        return@Runnable
-                    }
-                    val cur = n.text?.toString() ?: ""
-                    n.recycle()
-                    root.recycle()
-                    if (cur != expected) {
-                        OverlayPrefs.resetWriteSuccessCount(this@AutomationBridge, lastEventPkg)
-                        if (!OverlayPrefs.isNoPopupPackage(this@AutomationBridge, lastEventPkg) && !OverlayPrefs.isInCooldown(this@AutomationBridge)) {
-                            OverlayInput.show(this@AutomationBridge)
-                        }
-                    }
-                } catch (_: Exception) {}
-            }
-            mainHandler.postDelayed(r, 250L)
-        } catch (_: Exception) {}
-    }
-
     private fun setCursorEnd(node: AccessibilityNodeInfo, index: Int) {
         try {
             val sel = Bundle()
@@ -574,6 +556,31 @@ class AutomationBridge : AccessibilityService() {
                         for (n in nodes) {
                             try {
                                 if (n.isEditable) return AccessibilityNodeInfo.obtain(n)
+                            } finally { n.recycle() }
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+
+        // 🌟 针对微信的专属 ID 查找
+        if (isWechat) {
+            val wxIds = listOf(
+                "com.tencent.mm:id/chatting_edit",
+                "com.tencent.mm:id/chatting_et",
+                "com.tencent.mm:id/bkk",
+                "com.tencent.mm:id/a0s",
+                "com.tencent.mm:id/input"
+            )
+            for (id in wxIds) {
+                try {
+                    val nodes = root.findAccessibilityNodeInfosByViewId(id)
+                    if (!nodes.isNullOrEmpty()) {
+                        for (n in nodes) {
+                            try {
+                                if (n.isEditable || n.className?.toString()?.contains("EditText") == true) {
+                                    return AccessibilityNodeInfo.obtain(n)
+                                }
                             } finally { n.recycle() }
                         }
                     }
