@@ -3,8 +3,8 @@
     <!-- 基于 Material3 DayNight：自动跟随系统暗色模式；
          不覆盖颜色槽位，Android 12+ 可被 DynamicColors 动态取色覆盖 -->
     <style name="Theme.QQReplyApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- 🌟 核心改动：将启动页背景色改为深色，消除网页加载前的白屏闪烁 -->
-        <item name="android:windowBackground">#06080E</item>
+        <!-- 🌟 核心改动：将启动页背景色改为浅色，消除网页加载前的白屏/黑屏闪烁 -->
+        <item name="android:windowBackground">#FFF0F5</item>
     </style>
 
     <!-- 下拉磁贴长按弹出的开关面板：透明浮窗，只承载 AlertDialog，不显示 Activity 自身界面 -->
