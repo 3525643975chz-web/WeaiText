@@ -71,10 +71,10 @@ class AutomationBridge : AccessibilityService() {
     
     private val bgExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
     
-    // 🌟 优化1：防抖延迟加大到 250ms，给输入法留出上屏（拼音转汉字）的时间
-    private val TEXT_CHANGE_DELAY_MS = 250L 
+    // 加大防抖延迟到 400ms，给输入法上屏的时间
+    private val TEXT_CHANGE_DELAY_MS = 400L 
     private var pendingTextRunnable: Runnable? = null
-    private val CONTENT_CHANGE_DELAY_MS = 250L
+    private val CONTENT_CHANGE_DELAY_MS = 400L
     private var pendingContentRunnable: Runnable? = null
     
     private var verifyPending = false
@@ -347,27 +347,32 @@ class AutomationBridge : AccessibilityService() {
                     }
 
                     if (isWechat) {
-                        // 🌟 优化2：微信专属清空+全选粘贴大法
-                        addLog("微信替换连招启动")
+                        // 🌟 终极无痛方案：绝不主动清空，全选后延迟粘贴！
+                        addLog("微信执行全选延时覆盖")
                         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("weaitext", newText)
                         clipboard.setPrimaryClip(clip)
                         
                         inputNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
                         
-                        // 清空输入框（有时候微信必须清空才能塞进去）
-                        val clearArgs = Bundle()
-                        clearArgs.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "")
-                        inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, clearArgs)
-                        
-                        // 强制全选旧文本（防止叠加）
+                        // 全选原文本
                         val selectArgs = Bundle()
                         selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
                         selectArgs.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, raw.length)
                         inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectArgs)
                         
-                        // 粘贴
-                        inputNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+                        // 延迟 100ms 再粘贴，绝对不阻塞主线程
+                        mainHandler.postDelayed({
+                            try {
+                                val curRoot = rootInActiveWindow
+                                val curInput = findInputField(curRoot)
+                                if (curInput != null) {
+                                    curInput.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+                                    curInput.recycle()
+                                }
+                                curRoot?.recycle()
+                            } catch (_: Exception) {}
+                        }, 100)
                         
                         lastSet = newText
                         
