@@ -128,8 +128,19 @@ class LauncherActivity : AppCompatActivity() {
         applySystemBarInsets()
         lastThemeVersion = themeCfg.version
         cfg = SettingsRepository.load(this)
-        
-        // 🚨 彻底删除了 LifelineService 的启动代码，保平安！
+
+        // 每次打开软件，默默拉起后台服务
+        LifelineService.start(this)
+    }
+
+    // 🌟 核心功能：监听用户按 Home 键退回桌面
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        // 如果开启了隐身开关
+        if (darkPrefs().getBoolean("bg_mode_hide", false)) {
+            // 将自己从多任务列表中移除（卡片消失，但服务还在跑）
+            finishAndRemoveTask()
+        }
     }
 
     inner class WebBridge {
@@ -163,8 +174,8 @@ class LauncherActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun setBackgroundMode(enabled: Boolean) {
+            // 只存状态，不需要其他的了
             darkPrefs().edit().putBoolean("bg_mode_hide", enabled).apply()
-            // 这里也彻底删除了启动代码
         }
 
         @JavascriptInterface
