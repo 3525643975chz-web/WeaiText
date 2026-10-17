@@ -129,6 +129,18 @@ class LauncherActivity : AppCompatActivity() {
         applySystemBarInsets()
         lastThemeVersion = themeCfg.version
         cfg = SettingsRepository.load(this)
+
+        // 🌟 修复：每次打开软件，自动启动保活服务（如果你在网页开了“隐藏后台”，它会自动隐藏通知）
+        try {
+            val intent = Intent(this, LifelineService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     inner class WebBridge {
@@ -260,7 +272,6 @@ class LauncherActivity : AppCompatActivity() {
         }
     }
 
-    // ----- 以下全部是为了防止原生 UI 文件报错而保留的“空壳”方法 -----
     internal fun maybeShowFirstWarning() {}
     internal fun updateThemeStatus() {}
     internal fun updateServiceStatus() {}
