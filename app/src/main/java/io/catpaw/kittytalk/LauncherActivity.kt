@@ -202,26 +202,38 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
 
-        // 🌟 新增：获取手机上真实安装的应用（排除系统应用）
+        // 🌟 优化版：获取手机上真实安装的【用户应用】（速度极快，过滤系统组件）
         @JavascriptInterface
         fun getInstalledApps(): String {
-            val pm = packageManager
-            // 获取所有应用列表
-            val packages = pm.getInstalledApplications(0)
-            val jsonArray = JSONArray()
-            
-            for (pkg in packages) {
-                // 过滤掉系统应用（只保留用户自己下载安装的）
-                if ((pkg.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) {
-                    try {
+            try {
+                val pm = packageManager
+                // 只获取有桌面启动图标的应用（排除系统后台服务）
+                val intent = Intent(Intent.ACTION_MAIN, null)
+                intent.addCategory(Intent.CATEGORY_LAUNCHER)
+                val resolveInfos = pm.queryIntentActivities(intent, 0)
+                
+                val jsonArray = JSONArray()
+                val addedPkgs = mutableSetOf<String>() // 去重
+                
+                for (info in resolveInfos) {
+                    val pkgName = info.activityInfo.packageName
+                    if (addedPkgs.contains(pkgName)) continue
+                    
+                    val appInfo = pm.getApplicationInfo(pkgName, 0)
+                    // 过滤掉系统应用 (FLAG_SYSTEM 为 0 的才是用户自己安装的)
+                    if ((appInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) {
                         val obj = JSONObject()
-                        obj.put("name", pm.getApplicationLabel(pkg).toString())
-                        obj.put("pkg", pkg.packageName)
+                        obj.put("name", pm.getApplicationLabel(appInfo).toString())
+                        obj.put("pkg", pkgName)
                         jsonArray.put(obj)
-                    } catch (e: Exception) {}
+                        addedPkgs.add(pkgName)
+                    }
                 }
+                return jsonArray.toString()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return "[]" // 如果出错返回空数组，防止网页崩溃
             }
-            return jsonArray.toString()
         }
 
         // ✅ 终极核心：将网页传过来的 JSON 解析并注入 Room 数据库！
@@ -300,8 +312,6 @@ class LauncherActivity : AppCompatActivity() {
 
                     // 6. 通知后台核心服务重新读取配置！
                     AutomationBridge.instance?.reload()
-
-                    // ❌ 已删掉 Toast 提示，让网页静默保存
                     
                 } catch (e: Exception) {
                     e.printStackTrace()
