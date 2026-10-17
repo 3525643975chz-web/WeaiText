@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
@@ -16,7 +17,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.color.DynamicColors
-import io.catpaw.kittytalk.data.*
+import io.catpaw.kittytalk.data.* 
 import io.catpaw.kittytalk.databinding.ActivityMainBinding
 import org.json.JSONArray
 import org.json.JSONObject
@@ -28,14 +29,76 @@ class LauncherActivity : AppCompatActivity() {
     internal lateinit var binding: ActivityMainBinding
     internal lateinit var cfg: SettingsRepository.Config
 
+    internal val maxVisible = 3
+    internal var suffixesExpanded = false
+    internal var rulesExpanded = false
+    internal var wholeRulesExpanded = false
+
+    internal var exportTarget: List<Category>? = null
+    internal val exportLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                contentResolver.openOutputStream(uri)?.use {
+                    val src = exportTarget ?: cfg.categories
+                    it.write(SettingsRepository.toExportJson(SettingsRepository.Config(src.toMutableList())).toByteArray())
+                }
+                toast("已导出规则")
+            } catch (e: Exception) {
+                toast("导出失败：" + e.message)
+            }
+            exportTarget = null
+        }
+    }
+
+    internal val importLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val text = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                val imported = if (text != null) SettingsRepository.parseImport(text) else null
+                if (imported == null) {
+                    toast("导入失败：文件格式无效")
+                } else {
+                    mergeImport(imported)
+                }
+            } catch (e: Exception) {
+                toast("导入失败：" + e.message)
+            }
+        }
+    }
+
+    internal val themeLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (PaletteStore.load(this).version != lastThemeVersion) {
+            recreate()
+        }
+    }
+
     internal val funcKey = "func_enabled"
+    internal val punctKey = "punctuation_trigger"
+    internal val punctEatPeriodKey = "punct_eat_period"
+    internal val sentenceBlockKey = "sentence_block_chars"
+    internal val sentenceTriggerKey = "sentence_trigger"
+    internal val atSkipKey = "at_skip"
     internal val shizukuKey = "shizuku_keepalive"
+    internal val prefWarningVersion = "warning_version"
+    internal val prefLogVisible = "log_visible"
     internal val prefCurrentTab = "current_tab"
 
     internal val shizukuListener = object : Shizuku.OnRequestPermissionResultListener {
         override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) { }
     }
     internal val shizukuBinderListener = Shizuku.OnBinderReceivedListener { }
+
+    internal var logFollowBottom = true
+    internal var logProgrammaticScroll = false
+
+    internal var thanksClickCount = 0
+    internal var lastThanksClick = 0L
 
     internal var lastThemeVersion = -1
 
@@ -49,12 +112,8 @@ class LauncherActivity : AppCompatActivity() {
         }
         setupEdgeToEdge()
         
-        // 初始化原生 binding，防止其他文件报错
         binding = ActivityMainBinding.inflate(layoutInflater)
         
-        // ==========================================
-        // 核心：加载 WebView 网页界面
-        // ==========================================
         val webView = WebView(this)
         val settings = webView.settings
         settings.javaScriptEnabled = true
@@ -66,27 +125,21 @@ class LauncherActivity : AppCompatActivity() {
         webView.loadUrl("file:///android_asset/index.html")
         
         setContentView(webView)
-        // ==========================================
 
         applySystemBarInsets()
         lastThemeVersion = themeCfg.version
         cfg = SettingsRepository.load(this)
     }
 
-    // 写给网页调用的桥接类
     inner class WebBridge {
         @JavascriptInterface
         fun openBatterySettings() {
-            runOnUiThread {
-                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-            }
+            runOnUiThread { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
         }
 
         @JavascriptInterface
         fun openAccessibilitySettings() {
-            runOnUiThread {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            }
+            runOnUiThread { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
         }
 
         @JavascriptInterface
@@ -107,11 +160,9 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
 
-        // 隐藏后台通知开关
         @JavascriptInterface
         fun setBackgroundMode(enabled: Boolean) {
             darkPrefs().edit().putBoolean("bg_mode_hide", enabled).apply()
-            // 重启后台服务，触发 LifelineService 重新读取配置
             val intent = Intent(this@LauncherActivity, LifelineService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(intent)
@@ -120,7 +171,6 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
 
-        // 获取手机安装的应用
         @JavascriptInterface
         fun getInstalledApps(): String {
             try {
@@ -152,7 +202,6 @@ class LauncherActivity : AppCompatActivity() {
             }
         }
 
-        // 保存网页传来的配置并注入数据库
         @JavascriptInterface
         fun saveConfig(json: String) {
             Thread {
@@ -171,17 +220,7 @@ class LauncherActivity : AppCompatActivity() {
                     if (rulesJson != null) {
                         for (i in 0 until rulesJson.length()) {
                             val ruleObj = rulesJson.getJSONObject(i)
-                            rulesList.add(
-                                RuleEntity(
-                                    cid = defaultCid,
-                                    trigger = ruleObj.optString("from"),
-                                    replacement = ruleObj.optString("to"),
-                                    active = 1,
-                                    whole = 0,
-                                    exclude = 0,
-                                    seq = i
-                                )
-                            )
+                            rulesList.add(RuleEntity(cid = defaultCid, trigger = ruleObj.optString("from"), replacement = ruleObj.optString("to"), active = 1, whole = 0, exclude = 0, seq = i))
                         }
                     }
 
@@ -190,14 +229,7 @@ class LauncherActivity : AppCompatActivity() {
                     if (appendMagic != null && appendMagic.optBoolean("enabled")) {
                         val suffixText = appendMagic.optString("suffix", "喵")
                         if (suffixText.isNotEmpty()) {
-                            suffixesList.add(
-                                SuffixEntity(
-                                    cid = defaultCid,
-                                    content = suffixText,
-                                    active = 1,
-                                    seq = 0
-                                )
-                            )
+                            suffixesList.add(SuffixEntity(cid = defaultCid, content = suffixText, active = 1, seq = 0))
                         }
                     }
 
@@ -208,14 +240,7 @@ class LauncherActivity : AppCompatActivity() {
                     if (targetsJson != null) {
                         for (i in 0 until targetsJson.length()) {
                             val pkg = targetsJson.getString(i)
-                            allowlist.add(
-                                AllowlistEntity(
-                                    pkg = pkg,
-                                    active = 1,
-                                    clipboard = 0,
-                                    label = ""
-                                )
-                            )
+                            allowlist.add(AllowlistEntity(pkg = pkg, active = 1, clipboard = 0, label = ""))
                         }
                     }
                     dao.replaceAllowlist(allowlist)
@@ -234,6 +259,36 @@ class LauncherActivity : AppCompatActivity() {
             return "" 
         }
     }
+
+    // ----- 以下全部是为了防止原生 UI 文件报错而保留的“空壳”方法 -----
+    internal fun maybeShowFirstWarning() {}
+    internal fun updateThemeStatus() {}
+    internal fun updateServiceStatus() {}
+    internal fun showTab(menuId: Int) {}
+    internal fun applyConfig() {}
+    internal fun isLogVisible(): Boolean = false
+    internal fun saveLogVisible(v: Boolean) {}
+    internal fun mergeImport(imported: SettingsRepository.Config) {}
+    internal fun refreshRulesUi() {}
+    internal fun refreshWhitelistUi() {}
+    internal fun refreshDebugLog() {}
+    internal fun setupBottomNav() {}
+    internal fun setupServiceCard() {}
+    internal fun setupFuncSwitch() {}
+    internal fun setupPunctuationSwitch() {}
+    internal fun setupSentenceSuffixSwitch() {}
+    internal fun setupAtSkipSwitch() {}
+    internal fun setupSuffixControls() {}
+    internal fun setupCategoryControls() {}
+    internal fun setupListToggles() {}
+    internal fun setupWhitelist() {}
+    internal fun setupFab() {}
+    internal fun setupSettingsButtons() {}
+    internal fun setupShizuku() {}
+    internal fun setupDebugLog() {}
+    internal fun setupInfoButton() {}
+    internal fun setupVersionBadge() {}
+    internal fun refreshShizukuStatus() {}
 
     override fun onDestroy() {
         AutomationBridge.logListener = null
